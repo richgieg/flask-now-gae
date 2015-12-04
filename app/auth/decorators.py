@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import abort
 from flask.ext.login import current_user, fresh_login_required
-from .auth.models import Permission
+from .models import Permission
 
 
 def permission_required(permission):
@@ -32,6 +32,7 @@ def permission_or_404(permission):
 
 def admin_or_404(f):
     return permission_or_404(Permission.ADMINISTER)(f)
+
 
 def fresh_admin_or_404(f):
     return admin_or_404(fresh_login_required(f))

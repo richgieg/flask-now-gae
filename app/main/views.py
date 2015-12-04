@@ -1,8 +1,8 @@
 from flask import render_template, redirect, url_for, abort
 from flask.ext.login import login_required, current_user, fresh_login_required
 from .. import flash_it
+from ..auth.decorators import admin_required
 from ..auth.models import Role, User
-from ..decorators import admin_required
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm
 from .messages import Messages
