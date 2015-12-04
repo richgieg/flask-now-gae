@@ -24,7 +24,7 @@ def users():
     if current_user.is_administrator():
         users = User.query.order_by(User.username).all()
     else:
-        users = User.query.filter(User.confirmed).order_by(User.username).all()
+        users = User.query.filter(User._confirmed).order_by(User.username).all()
     return render_template('users.html', users=users)
 
 

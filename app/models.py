@@ -5,7 +5,6 @@ from itsdangerous import Signer, TimedJSONWebSignatureSerializer as Serializer,\
     SignatureExpired, BadSignature
 from flask import current_app, request, session
 from flask.ext.login import UserMixin, AnonymousUserMixin, make_secure_token
-from sqlalchemy.ext.hybrid import hybrid_property
 from . import db, login_manager
 
 
@@ -131,7 +130,7 @@ class User(UserMixin, db.Model):
             self.locked = True
         return False
 
-    @hybrid_property
+    @property
     def confirmed(self):
         return self._confirmed
 
