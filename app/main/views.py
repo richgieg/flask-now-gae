@@ -24,14 +24,9 @@ def user(username):
 @main.route('/users')
 def users():
     if current_user.is_administrator():
-        users = User.query().order(User.username).fetch()
+        users = User.get_users(order=User.username)
     else:
-        users = (
-            User.query()
-                .filter(User.pvt__confirmed == True)
-                .order(User.username)
-                .fetch()
-        )
+        users = User.get_confirmed_users(order=User.username)
     return render_template('users.html', users=users)
 
 

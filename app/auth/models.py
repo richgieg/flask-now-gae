@@ -92,6 +92,20 @@ class User(UserMixin, ndb.Model):
         self.update_avatar_hash()
         self.update_auth_token()
 
+    @staticmethod
+    def get_users(order):
+        query = User.query()
+        if order:
+            query = query.order(order)
+        return query.fetch()
+
+    @staticmethod
+    def get_confirmed_users(order):
+        query = User.query().filter(User.pvt__confirmed == True)
+        if order:
+            query = query.order(order)
+        return query.fetch()
+
     def get_id(self):
         """Returns the User entity's key for Flask-Login."""
         return unicode(self.key.id())
