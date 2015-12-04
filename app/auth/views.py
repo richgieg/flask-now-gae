@@ -6,12 +6,12 @@ from flask.ext.login import login_user, logout_user, login_required, \
 from . import auth
 from .. import login_manager
 from ..decorators import fresh_admin_or_404
-from ..models import User
 from ..email import send_email
 from ..messages import AuthMessages, flash_it
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, \
     PasswordResetRequestForm, PasswordResetForm, ChangeEmailForm, \
     ChangeUsernameForm, ReauthenticationForm
+from .models import User
 
 
 # Set Flask-Login flash messages.

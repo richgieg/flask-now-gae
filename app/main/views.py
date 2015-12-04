@@ -1,10 +1,10 @@
 from flask import render_template, redirect, url_for, abort
 from flask.ext.login import login_required, current_user, fresh_login_required
-from . import main
-from .forms import EditProfileForm, EditProfileAdminForm
-from ..models import Role, User
+from ..auth.models import Role, User
 from ..decorators import admin_required
 from ..messages import MainMessages, flash_it
+from . import main
+from .forms import EditProfileForm, EditProfileAdminForm
 
 
 @main.route('/')

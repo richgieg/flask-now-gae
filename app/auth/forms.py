@@ -4,7 +4,7 @@ from flask.ext.wtf import Form
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, HiddenField
 from wtforms.validators import Required, Length, Email, Regexp, EqualTo
 from wtforms import ValidationError
-from ..models import User
+from .models import User
 
 
 def is_safe_redirect_url(target):

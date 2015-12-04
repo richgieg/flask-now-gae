@@ -6,7 +6,7 @@ from itsdangerous import Signer, TimedJSONWebSignatureSerializer as Serializer,\
 from flask import current_app, request, session
 from flask.ext.login import UserMixin, AnonymousUserMixin, make_secure_token
 from google.appengine.ext import ndb
-from . import login_manager
+from .. import login_manager
 
 
 class AccountPolicy:

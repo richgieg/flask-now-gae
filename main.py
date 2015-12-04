@@ -1,6 +1,6 @@
 import os
 from app import create_app
-from app.models import Role
+from app.auth.models import Role
 
 # Seed role entities
 Role.insert_roles()
