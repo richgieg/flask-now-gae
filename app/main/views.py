@@ -1,10 +1,11 @@
 from flask import render_template, redirect, url_for, abort
 from flask.ext.login import login_required, current_user, fresh_login_required
+from .. import flash_it
 from ..auth.models import Role, User
 from ..decorators import admin_required
-from ..messages import MainMessages, flash_it
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm
+from .messages import Messages
 
 
 @main.route('/')
@@ -43,7 +44,7 @@ def edit_profile():
         current_user.location = form.location.data
         current_user.about_me = form.about_me.data
         current_user.put()
-        flash_it(MainMessages.PROFILE_UPDATED)
+        flash_it(Messages.PROFILE_UPDATED)
         return redirect(url_for('.user', username=current_user.username))
     form.name.data = current_user.name
     form.location.data = current_user.location
@@ -70,7 +71,7 @@ def edit_profile_admin(id):
         user.location = form.location.data
         user.about_me = form.about_me.data
         user.put()
-        flash_it(MainMessages.OTHER_PROFILE_UPDATED)
+        flash_it(Messages.OTHER_PROFILE_UPDATED)
         return redirect(url_for('.user', username=user.username))
     form.email.data = user.email
     form.username.data = user.username

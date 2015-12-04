@@ -1,4 +1,4 @@
-"""Flash message constants.
+"""Flash message constants for auth package.
 
 This module contains all of the string constants used for flash messages. The
 attributes in the message classes should be tuples with two elements. The first
@@ -8,25 +8,12 @@ passing a CSS class name behind the scenes. If you do not wish for a flash
 message to be displayed for a particular event, set the attribute to None
 instead of the standard tuple.
 
-Message Classes:
-    AuthMessages:   Messages used in "auth" blueprint.
-    MainMessages:   Messages used in "main" blueprint.
-
-Functions:
-    flash_it:   Wrapper for Flask's flash function.
-
 """
 
-from flask import flash
-from .flash_category import FlashCategory
+from .. import FlashCategory
 
 
-def flash_it(message_structure):
-    if message_structure:
-        flash(*message_structure)
-
-
-class AuthMessages:
+class Messages:
     ACCOUNT_CONFIRMED = (
         'Your account is confirmed',
         FlashCategory.SUCCESS
@@ -93,16 +80,5 @@ class AuthMessages:
     )
     USERNAME_UPDATED = (
         'Your username is updated',
-        FlashCategory.SUCCESS
-    )
-
-
-class MainMessages:
-    PROFILE_UPDATED = (
-        'Your profile is updated',
-        FlashCategory.SUCCESS
-    )
-    OTHER_PROFILE_UPDATED = (
-        'The profile is updated',
         FlashCategory.SUCCESS
     )
