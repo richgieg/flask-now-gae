@@ -55,7 +55,9 @@ def edit_profile():
 @fresh_login_required
 @admin_required
 def edit_profile_admin(id):
-    user = User.query.get_or_404(id)
+    user = User.get(id)
+    if not user:
+        abort(404)
     form = EditProfileAdminForm(user=user)
     if form.validate_on_submit():
         user.email = form.email.data
