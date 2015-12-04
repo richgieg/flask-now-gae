@@ -1,0 +1,13 @@
+Dear {{ user.username }},
+
+Welcome to {{ config['APP_TITLE'] }}!
+
+To confirm your account, please visit following link:
+
+{{ url_for('auth.confirm', token=token, _external=True) }}
+
+Sincerely,
+
+The {{ config['APP_TITLE'] }} Team
+
+Note: replies to this email address are not monitored.
