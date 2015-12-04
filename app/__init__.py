@@ -5,6 +5,7 @@ from flask.ext.login import LoginManager
 from google.appengine.api import mail
 from config import config
 
+
 bootstrap = Bootstrap()
 moment = Moment()
 

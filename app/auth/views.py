@@ -56,7 +56,7 @@ def after_request(response):
 @auth.route('/locked')
 def locked():
     if session.pop('_locked', None):
-        return render_template('auth/locked.html')
+        return render_template('locked.html')
     return redirect(url_for('auth.login'))
 
 
@@ -64,7 +64,7 @@ def locked():
 def disabled():
     if session.pop('_disabled', None):
         session.pop('_locked', None)
-        return render_template('auth/disabled.html')
+        return render_template('disabled.html')
     return redirect(url_for('auth.login'))
 
 
@@ -72,7 +72,7 @@ def disabled():
 def unconfirmed():
     if current_user.is_anonymous or current_user.confirmed:
         return redirect(url_for('main.index'))
-    return render_template('auth/unconfirmed.html')
+    return render_template('unconfirmed.html')
 
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -87,7 +87,7 @@ def login():
             session['auth_token'] = user.auth_token
             return form.redirect('main.index')
         flash_it(Messages.INVALID_CREDENTIALS)
-    return render_template('auth/login.html', form=form)
+    return render_template('login.html', form=form)
 
 
 @auth.route('/reauthenticate', methods=['GET', 'POST'])
@@ -103,7 +103,7 @@ def reauthenticate():
             confirm_login()
             return form.redirect('main.index')
         flash_it(Messages.INVALID_PASSWORD)
-    return render_template('auth/reauthenticate.html', form=form)
+    return render_template('reauthenticate.html', form=form)
 
 
 @auth.route('/logout')
@@ -124,7 +124,7 @@ def register():
     # this check, is it possible that the number of users could be one greater
     # than APP_MAX_USERS?
     if not User.can_register():
-        return render_template('auth/register_disabled.html')
+        return render_template('register_disabled.html')
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User(email=form.email.data,
@@ -133,10 +133,10 @@ def register():
         user.put()
         token = user.generate_confirmation_token()
         send_email(user.email, 'Confirm Your Account',
-                   'auth/email/confirm', user=user, token=token)
+                   'email/confirm', user=user, token=token)
         flash_it(Messages.CONFIRM_ACCOUNT)
         return redirect(url_for('main.index'))
-    return render_template('auth/register.html', form=form)
+    return render_template('register.html', form=form)
 
 
 @auth.route('/confirm/<token>')
@@ -158,7 +158,7 @@ def resend_confirmation():
         return redirect(url_for('main.index'))
     token = current_user.generate_confirmation_token()
     send_email(current_user.email, 'Confirm Your Account',
-               'auth/email/confirm', user=current_user, token=token)
+               'email/confirm', user=current_user, token=token)
     flash_it(Messages.CONFIRM_ACCOUNT)
     return redirect(url_for('main.index'))
 
@@ -176,7 +176,7 @@ def change_username():
                                     username=current_user.username))
         else:
             flash_it(Messages.INVALID_PASSWORD)
-    return render_template("auth/change_username.html", form=form)
+    return render_template("change_username.html", form=form)
 
 
 @auth.route('/change-password', methods=['GET', 'POST'])
@@ -193,7 +193,7 @@ def change_password():
                                          username=current_user.username))
         else:
             flash_it(Messages.INVALID_PASSWORD)
-    return render_template("auth/change_password.html", form=form)
+    return render_template("change_password.html", form=form)
 
 
 @auth.route('/reset', methods=['GET', 'POST'])
@@ -209,7 +209,7 @@ def password_reset_request():
             else:
                 token = user.generate_reset_token()
                 send_email(user.email, 'Reset Your Password',
-                           'auth/email/reset_password',
+                           'email/reset_password',
                            user=user, token=token,
                            next=request.args.get('next'))
                 flash_it(Messages.PASSWORD_RESET_REQUEST)
@@ -217,7 +217,7 @@ def password_reset_request():
             # This is just to trick anyone guessing email addresses.
             flash_it(Messages.PASSWORD_RESET_REQUEST)
         return redirect(url_for('auth.login'))
-    return render_template('auth/reset_password.html', form=form)
+    return render_template('reset_password.html', form=form)
 
 
 @auth.route('/reset/<token>', methods=['GET', 'POST'])
@@ -238,7 +238,7 @@ def password_reset(token):
         else:
             flash_it(Messages.INVALID_PASSWORD_RESET_LINK)
             return redirect(url_for('main.index'))
-    return render_template('auth/reset_password.html', form=form)
+    return render_template('reset_password.html', form=form)
 
 
 @auth.route('/change-email', methods=['GET', 'POST'])
@@ -250,14 +250,14 @@ def change_email_request():
             new_email = form.email.data
             token = current_user.generate_email_change_token(new_email)
             send_email(new_email, 'Confirm Your Email Address',
-                       'auth/email/change_email',
+                       'email/change_email',
                        user=current_user, token=token)
             flash_it(Messages.EMAIL_CHANGE_REQUEST)
             return form.redirect(url_for('main.user',
                                          username=current_user.username))
         else:
             flash_it(Messages.INVALID_PASSWORD)
-    return render_template("auth/change_email.html", form=form)
+    return render_template("change_email.html", form=form)
 
 
 @auth.route('/change-email/<token>')
