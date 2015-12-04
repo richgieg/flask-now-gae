@@ -78,6 +78,10 @@ class Messages:
         'Your session has expired',
         FlashCategory.DANGER
     )
+    USER_UPDATED = (
+        'The user is updated',
+        FlashCategory.SUCCESS
+    )
     USERNAME_UPDATED = (
         'Your username is updated',
         FlashCategory.SUCCESS

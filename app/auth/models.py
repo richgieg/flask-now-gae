@@ -7,6 +7,7 @@ from flask import current_app, request, session
 from flask.ext.login import UserMixin, AnonymousUserMixin, make_secure_token
 from google.appengine.ext import ndb
 from .. import login_manager
+from ..main.models import Profile
 
 
 class AccountPolicy:
@@ -71,9 +72,6 @@ class User(UserMixin, ndb.Model):
     username = ndb.StringProperty()
     role_key = ndb.KeyProperty(kind=Role, indexed=False)
     password_hash = ndb.StringProperty(indexed=False)
-    name = ndb.StringProperty(indexed=False)
-    location = ndb.StringProperty(indexed=False)
-    about_me = ndb.TextProperty()
     member_since = ndb.DateTimeProperty(auto_now_add=True)
     last_seen = ndb.DateTimeProperty(auto_now_add=True)
     avatar_hash = ndb.StringProperty(indexed=False)
@@ -111,6 +109,9 @@ class User(UserMixin, ndb.Model):
     @role.setter
     def role(self, role):
         self.role_key = role.key
+
+    def get_profile(self):
+        return Profile.query(ancestor=self.key).get()
 
     @staticmethod
     def can_register():

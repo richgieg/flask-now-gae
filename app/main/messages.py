@@ -18,7 +18,3 @@ class Messages:
         'Your profile is updated',
         FlashCategory.SUCCESS
     )
-    OTHER_PROFILE_UPDATED = (
-        'The profile is updated',
-        FlashCategory.SUCCESS
-    )

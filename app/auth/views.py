@@ -4,12 +4,14 @@ from flask import render_template, redirect, request, url_for, session, \
 from flask.ext.login import login_user, logout_user, login_required, \
     current_user, fresh_login_required, confirm_login, login_fresh
 from .. import flash_it, login_manager, send_email
+from ..main.models import Profile
 from . import auth
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, \
     PasswordResetRequestForm, PasswordResetForm, ChangeEmailForm, \
-    ChangeUsernameForm, ReauthenticationForm
+    ChangeUsernameForm, ReauthenticationForm, EditUserForm
+from .decorators import admin_required
 from .messages import Messages
-from .models import User
+from .models import Role, User
 
 
 # Set Flask-Login flash messages.
@@ -131,6 +133,8 @@ def register():
                     username=form.username.data)
         user.password = form.password.data
         user.put()
+        profile = Profile(parent=user.key)
+        profile.put()
         token = user.generate_confirmation_token()
         send_email(user.email, 'Confirm Your Account',
                    'email/confirm', user=user, token=token)
@@ -270,3 +274,30 @@ def change_email(token):
         flash_it(Messages.INVALID_CONFIRMATION_LINK)
     return redirect(url_for('main.user',
                             username=current_user.username))
+
+
+@auth.route('/edit-user/<int:id>', methods=['GET', 'POST'])
+@fresh_login_required
+@admin_required
+def edit_user(id):
+    user = User.get(id)
+    if not user:
+        abort(404)
+    form = EditUserForm(user=user)
+    if form.validate_on_submit():
+        user.email = form.email.data
+        user.username = form.username.data
+        user.confirmed = form.confirmed.data
+        user.enabled = form.enabled.data
+        user.locked = form.locked.data
+        user.role = Role.get(form.role.data)
+        user.put()
+        flash_it(Messages.USER_UPDATED)
+        return redirect(url_for('main.user', username=user.username))
+    form.email.data = user.email
+    form.username.data = user.username
+    form.enabled.data = user.enabled
+    form.locked.data = user.locked
+    form.confirmed.data = user.confirmed
+    form.role.data = user.role.id
+    return render_template('edit_user.html', form=form, user=user)

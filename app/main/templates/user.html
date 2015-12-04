@@ -15,18 +15,18 @@
         <img class="img-responsive img-rounded" src="{{ user.gravatar(size=250) }}" alt="Gravatar image for user {{ user.username }}"><br>
     </div>
     <div class="col-sm-9 col-md-7">
-        {% if user.name or user.location %}
+        {% if profile.name or profile.location %}
         <p>
-            {% if user.name %}{{ user.name }}<br>{% endif %}
-            {% if user.location %}
-                <a href="http://maps.google.com/?q={{ user.location }}">{{ user.location }}</a><br>
+            {% if profile.name %}{{ profile.name }}<br>{% endif %}
+            {% if profile.location %}
+                <a href="http://maps.google.com/?q={{ user.location }}">{{ profile.location }}</a><br>
             {% endif %}
         </p>
         {% endif %}
         {% if current_user.is_administrator() %}
         <p><a href="mailto:{{ user.email }}">{{ user.email }}</a></p>
         {% endif %}
-        {% if user.about_me %}<p>{{ user.about_me }}</p>{% endif %}
+        {% if profile.about_me %}<p>{{ profile.about_me }}</p>{% endif %}
         <p>
             Member since {{ moment(user.member_since).format('L') }}.
             Last seen {{ moment(user.last_seen).fromNow() }}.
@@ -36,7 +36,7 @@
             <a class="btn btn-default" href="{{ url_for('.edit_profile') }}">Edit Profile</a>
             {% endif %}
             {% if current_user.is_administrator() %}
-            <a class="btn btn-danger" href="{{ url_for('.edit_profile_admin', id=user.id) }}">Edit Profile [Admin]</a>
+            <a class="btn btn-danger" href="{{ url_for('auth.edit_user', id=user.id) }}">Edit User [Admin]</a>
             {% endif %}
         </p>
     </div>
