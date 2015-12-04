@@ -1,7 +1,8 @@
-from flask import flash, Flask
+from flask import current_app, flash, Flask, render_template
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.moment import Moment
 from flask.ext.login import LoginManager
+from google.appengine.api import mail
 from config import config
 
 bootstrap = Bootstrap()
@@ -44,3 +45,12 @@ class FlashCategory:
 def flash_it(message_structure):
     if message_structure:
         flash(*message_structure)
+
+
+def send_email(to, subject, template, **kwargs):
+    app = current_app._get_current_object()
+    sender = app.config['APP_MAIL_SENDER']
+    subject = app.config['APP_MAIL_SUBJECT_PREFIX'] + ' ' + subject
+    body = render_template(template + '.txt', **kwargs)
+    html = render_template(template + '.html', **kwargs)
+    mail.send_mail(sender, to, subject, body, html=html)
