@@ -37,15 +37,15 @@ class EditProfileAdminForm(Form):
     def __init__(self, user, *args, **kwargs):
         super(EditProfileAdminForm, self).__init__(*args, **kwargs)
         self.role.choices = [(role.id, role.name)
-                             for role in Role.query.order_by(Role.name).all()]
+                             for role in Role.all()]
         self.user = user
 
     def validate_email(self, field):
         if field.data != self.user.email and \
-                User.query.filter_by(email=field.data).first():
+                User.query().filter(User.email == field.data).get():
             raise ValidationError('Email already registered.')
 
     def validate_username(self, field):
         if field.data != self.user.username and \
-                User.query.filter_by(username=field.data).first():
+                User.query().filter(User.username == field.data).get():
             raise ValidationError('Username already in use.')

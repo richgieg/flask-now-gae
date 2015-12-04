@@ -1,0 +1,25 @@
+application: your-app-here
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: yes
+
+handlers:
+- url: /static
+  static_dir: static
+  secure: always
+
+- url: /.*
+  script: main.app
+  secure: always
+
+env_variables:
+  ######   DEVELOPMENT
+  FLASK_CONFIG: 'development'
+  APP_ADMIN: 'you@example.com'
+  SECRET_KEY: 'the development key'
+
+  ######   PRODUCTION
+  # FLASK_CONFIG: 'production'
+  # APP_ADMIN: 'you@example.com'
+  # SECRET_KEY: 'a super-secret long and random value'

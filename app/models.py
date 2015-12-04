@@ -5,7 +5,8 @@ from itsdangerous import Signer, TimedJSONWebSignatureSerializer as Serializer,\
     SignatureExpired, BadSignature
 from flask import current_app, request, session
 from flask.ext.login import UserMixin, AnonymousUserMixin, make_secure_token
-from . import db, login_manager
+from google.appengine.ext import ndb
+from . import login_manager
 
 
 class AccountPolicy:
@@ -22,13 +23,17 @@ class Permission:
     ADMINISTER = 0x80
 
 
-class Role(db.Model):
-    __tablename__ = 'roles'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), unique=True)
-    default = db.Column(db.Boolean, default=False, index=True)
-    permissions = db.Column(db.Integer)
-    users = db.relationship('User', backref='role', lazy='dynamic')
+class Role(ndb.Model):
+    name = ndb.StringProperty()
+    default = ndb.BooleanProperty(default=False)
+    permissions = ndb.IntegerProperty()
+
+    @property
+    def id(self):
+        return self.key.id()
+
+    def __repr__(self):
+        return '<Role %r>' % self.name
 
     @staticmethod
     def insert_roles():
@@ -43,48 +48,69 @@ class Role(db.Model):
             'Administrator': (0xff, False)
         }
         for r in roles:
-            role = Role.query.filter_by(name=r).first()
+            role = Role.query().filter(Role.name == r).get()
             if role is None:
                 role = Role(name=r)
             role.permissions = roles[r][0]
             role.default = roles[r][1]
-            db.session.add(role)
-        db.session.commit()
+            role.put()
 
-    def __repr__(self):
-        return '<Role %r>' % self.name
+    @staticmethod
+    def get(id):
+        """Returns the Role entity affiliated with the given ID."""
+        return ndb.Key(Role, id).get()
+
+    @staticmethod
+    def all():
+        """Returns all Role entities."""
+        return Role.query().fetch()
 
 
-class User(UserMixin, db.Model):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(64), unique=True, index=True)
-    username = db.Column(db.String(64), unique=True, index=True)
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
-    password_hash = db.Column(db.String(128))
-    _confirmed = db.Column(db.Boolean, default=False)
-    name = db.Column(db.String(64))
-    location = db.Column(db.String(64))
-    about_me = db.Column(db.Text())
-    member_since = db.Column(db.DateTime(), default=datetime.utcnow)
-    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
-    avatar_hash = db.Column(db.String(32))
-    auth_token = db.Column(db.String(128), unique=True, index=True)
-    last_failed_login_attempt = db.Column(db.DateTime(),
-                                          default=datetime.utcnow)
-    failed_login_attempts = db.Column(db.Integer, default=0)
-    _locked = db.Column(db.Boolean, default=False)
-    _enabled = db.Column(db.Boolean, default=True)
+class User(UserMixin, ndb.Model):
+    email = ndb.StringProperty()
+    username = ndb.StringProperty()
+    role_key = ndb.KeyProperty(kind=Role, indexed=False)
+    password_hash = ndb.StringProperty(indexed=False)
+    name = ndb.StringProperty(indexed=False)
+    location = ndb.StringProperty(indexed=False)
+    about_me = ndb.TextProperty()
+    member_since = ndb.DateTimeProperty(auto_now_add=True)
+    last_seen = ndb.DateTimeProperty(auto_now_add=True)
+    avatar_hash = ndb.StringProperty(indexed=False)
+    auth_token = ndb.StringProperty()
+    last_failed_login_attempt = ndb.DateTimeProperty(auto_now_add=True)
+    failed_login_attempts = ndb.IntegerProperty(default=0)
+    pvt__confirmed = ndb.BooleanProperty(default=False)
+    pvt__locked = ndb.BooleanProperty(default=False)
+    pvt__enabled = ndb.BooleanProperty(default=True)
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
         if self.role is None:
             if self.email == current_app.config['APP_ADMIN']:
-                self.role = Role.query.filter_by(permissions=0xff).first()
+                self.role = Role.query().filter(Role.permissions == 0xff).get()
             if self.role is None:
-                self.role = Role.query.filter_by(default=True).first()
+                self.role = Role.query().filter(Role.default == True).get()
         self.update_avatar_hash()
         self.update_auth_token()
+
+    def get_id(self):
+        """Returns the User entity's key for Flask-Login."""
+        return unicode(self.key.id())
+
+    @property
+    def id(self):
+        return self.key.id()
+
+    @property
+    def role(self):
+        if self.role_key:
+            return self.role_key.get()
+        return None
+
+    @role.setter
+    def role(self, role):
+        self.role_key = role.key
 
     @staticmethod
     def can_register():
@@ -95,8 +121,7 @@ class User(UserMixin, db.Model):
                 return True
             else:
                 return (
-                    db.session.query(User).count() <
-                        current_app.config['APP_MAX_USERS']
+                    User.query().count() < current_app.config['APP_MAX_USERS']
                 )
 
     @property
@@ -119,6 +144,7 @@ class User(UserMixin, db.Model):
         if check_password_hash(self.password_hash, password):
             self.last_failed_login_attempt = None
             self.failed_login_attempts = 0
+            self.put()
             return True
         if self.last_failed_login_attempt:
             if ((datetime.utcnow() - self.last_failed_login_attempt) >
@@ -128,47 +154,50 @@ class User(UserMixin, db.Model):
         self.failed_login_attempts += 1
         if self.failed_login_attempts == AccountPolicy.LOCKOUT_THRESHOLD:
             self.locked = True
+        self.put()
         return False
 
     @property
     def confirmed(self):
-        return self._confirmed
+        return self.pvt__confirmed
 
     @confirmed.setter
     def confirmed(self, confirmed):
-        if confirmed and not self._confirmed:
-            self._confirmed = True
-        elif not confirmed and self._confirmed:
-            self._confirmed = False
+        if confirmed and not self.pvt__confirmed:
+            self.pvt__confirmed = True
+        elif not confirmed and self.pvt__confirmed:
+            self.pvt__confirmed = False
+        self.put()
 
     @property
     def locked(self):
-        return self._locked
+        return self.pvt__locked
 
     @locked.setter
     def locked(self, locked):
-        if locked and not self._locked:
-            self._locked = True
+        if locked and not self.pvt__locked:
+            self.pvt__locked = True
             # Invalidate sessions and remember cookies.
             self.randomize_auth_token()
-        elif not locked and self._locked:
-            self._locked = False
+        elif not locked and self.pvt__locked:
+            self.pvt__locked = False
             self.failed_login_attempts = 0
             self.last_failed_login_attempt = None
+        self.put()
 
     @property
     def enabled(self):
-        return self._enabled
+        return self.pvt__enabled
 
     @enabled.setter
     def enabled(self, enabled):
-        if enabled and not self._enabled:
-            self._enabled = True
-
-        elif not enabled and self._enabled:
-            self._enabled = False
+        if enabled and not self.pvt__enabled:
+            self.pvt__enabled = True
+        elif not enabled and self.pvt__enabled:
+            self.pvt__enabled = False
             # Invalidate sessions and remember cookies.
             self.randomize_auth_token()
+        self.put()
 
     def generate_confirmation_token(self, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
@@ -185,6 +214,7 @@ class User(UserMixin, db.Model):
         if data.get('confirm') != self.id:
             return False
         self.confirmed = True
+        self.put()
         return True
 
     def generate_reset_token(self, expiration=3600):
@@ -202,6 +232,7 @@ class User(UserMixin, db.Model):
         if data.get('reset') != self.id:
             return False
         self.password = new_password
+        self.put()
         return True
 
     def generate_email_change_token(self, new_email, expiration=3600):
@@ -221,16 +252,18 @@ class User(UserMixin, db.Model):
         new_email = data.get('new_email')
         if new_email is None:
             return False
-        if self.query.filter_by(email=new_email).first() is not None:
+        if User.query().filter(User.email == new_email).get() is not None:
             return False
         self.email = new_email
         self.update_avatar_hash()
         self.update_auth_token()
+        self.put()
         return True
 
     def change_username(self, username):
         self.username = username
         self.update_auth_token()
+        self.put()
 
     def can(self, permissions):
         return self.role is not None and \
@@ -241,6 +274,7 @@ class User(UserMixin, db.Model):
 
     def ping(self):
         self.last_seen = datetime.utcnow()
+        self.put()
 
     def gravatar(self, size=100, default='identicon', rating='g'):
         if request.is_secure:
@@ -257,6 +291,7 @@ class User(UserMixin, db.Model):
         return None
 
     def update_avatar_hash(self):
+        # self.put() must be called after using this method!
         self.avatar_hash = self.generate_avatar_hash()
 
     def generate_auth_token(self):
@@ -267,22 +302,32 @@ class User(UserMixin, db.Model):
         return None
 
     def randomize_auth_token(self):
+        # self.put() must be called after using this method!
         self.auth_token = make_secure_token(
             generate_password_hash(current_app.config['SECRET_KEY']))
 
     def update_auth_token(self):
+        # self.put() must be called after using this method!
         self.auth_token = self.generate_auth_token()
 
     def verify_auth_token(self, token):
         return token == self.auth_token
 
-    # Returns a signed version of auth_token for Flask-Login's remember cookie.
     def get_auth_token(self):
+        """Returns a signed version of auth_token.
+
+        This method is used by Flask-Login for generating the remember cookie.
+        """
         s = Signer(current_app.config['SECRET_KEY'])
         return s.sign(self.auth_token)
 
     def __repr__(self):
         return '<User %r>' % self.username
+
+    @staticmethod
+    def get(id):
+        """Returns the User entity affiliated with the given ID."""
+        return ndb.Key(User, id).get()
 
 
 class AnonymousUser(AnonymousUserMixin):
@@ -297,7 +342,7 @@ login_manager.anonymous_user = AnonymousUser
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return User.get(int(user_id))
 
 
 @login_manager.token_loader
@@ -309,7 +354,7 @@ def load_user_from_signed_token(signed_token):
     except:
         pass
     if auth_token:
-        user = User.query.filter_by(auth_token=auth_token).first()
+        user = User.query().filter(User.auth_token == auth_token).get()
         if user:
             session['auth_token'] = user.auth_token
             return user

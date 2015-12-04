@@ -4,7 +4,7 @@ from flask import render_template, redirect, request, url_for, session, \
 from flask.ext.login import login_user, logout_user, login_required, \
     current_user, fresh_login_required, confirm_login, login_fresh
 from . import auth
-from .. import db, login_manager
+from .. import login_manager
 from ..decorators import fresh_admin_or_404
 from ..models import User
 from ..email import send_email
@@ -83,7 +83,7 @@ def login():
         return redirect(url_for('main.index'))
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query().filter(User.email == form.email.data).get()
         if user is not None and verify_password(user, form.password.data):
             login_user(user, form.remember_me.data)
             session['auth_token'] = user.auth_token
@@ -130,10 +130,9 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User(email=form.email.data,
-                    username=form.username.data,
-                    password=form.password.data)
-        db.session.add(user)
-        db.session.commit()
+                    username=form.username.data)
+        user.password = form.password.data
+        user.put()
         token = user.generate_confirmation_token()
         send_email(user.email, 'Confirm Your Account',
                    'auth/email/confirm', user=user, token=token)
@@ -189,7 +188,7 @@ def change_password():
     if form.validate_on_submit():
         if verify_password(current_user, form.current_password.data):
             current_user.password = form.password.data
-            db.session.add(current_user)
+            current_user.put()
             session['auth_token'] = current_user.auth_token
             flash_it(AuthMessages.PASSWORD_UPDATED)
             return form.redirect(url_for('main.user',
@@ -205,7 +204,7 @@ def password_reset_request():
         return redirect(url_for('main.index'))
     form = PasswordResetRequestForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query().filter(User.email == form.email.data).get()
         if user:
             if not user.enabled:
                 flash_it(AuthMessages.PASSWORD_RESET_REQUEST_DISABLED_ACCOUNT)
@@ -229,7 +228,7 @@ def password_reset(token):
         return redirect(url_for('main.index'))
     form = PasswordResetForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query().filter(User.email == form.email.data).get()
         if user is None:
             return redirect(url_for('main.index'))
         if user.reset_password(token, form.password.data):

@@ -2,7 +2,6 @@ from flask import render_template, redirect, url_for, abort
 from flask.ext.login import login_required, current_user, fresh_login_required
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm
-from .. import db
 from ..models import Role, User
 from ..decorators import admin_required
 from ..messages import MainMessages, flash_it
@@ -15,16 +14,23 @@ def index():
 
 @main.route('/user/<username>')
 def user(username):
-    user = User.query.filter_by(username=username).first_or_404()
+    user = User.query().filter(User.username == username).get()
+    if not user:
+        abort(404)
     return render_template('user.html', user=user)
 
 
 @main.route('/users')
 def users():
     if current_user.is_administrator():
-        users = User.query.order_by(User.username).all()
+        users = User.query().order(User.username).fetch()
     else:
-        users = User.query.filter(User._confirmed).order_by(User.username).all()
+        users = (
+            User.query()
+                .filter(User.pvt__confirmed == True)
+                .order(User.username)
+                .fetch()
+        )
     return render_template('users.html', users=users)
 
 
@@ -36,7 +42,7 @@ def edit_profile():
         current_user.name = form.name.data
         current_user.location = form.location.data
         current_user.about_me = form.about_me.data
-        db.session.add(current_user)
+        current_user.put()
         flash_it(MainMessages.PROFILE_UPDATED)
         return redirect(url_for('.user', username=current_user.username))
     form.name.data = current_user.name
@@ -57,11 +63,11 @@ def edit_profile_admin(id):
         user.confirmed = form.confirmed.data
         user.enabled = form.enabled.data
         user.locked = form.locked.data
-        user.role = Role.query.get(form.role.data)
+        user.role = Role.get(form.role.data)
         user.name = form.name.data
         user.location = form.location.data
         user.about_me = form.about_me.data
-        db.session.add(user)
+        user.put()
         flash_it(MainMessages.OTHER_PROFILE_UPDATED)
         return redirect(url_for('.user', username=user.username))
     form.email.data = user.email
@@ -69,7 +75,7 @@ def edit_profile_admin(id):
     form.enabled.data = user.enabled
     form.locked.data = user.locked
     form.confirmed.data = user.confirmed
-    form.role.data = user.role_id
+    form.role.data = user.role.id
     form.name.data = user.name
     form.location.data = user.location
     form.about_me.data = user.about_me

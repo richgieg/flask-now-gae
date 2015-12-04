@@ -80,11 +80,11 @@ class RegistrationForm(Form):
     submit = SubmitField('Register')
 
     def validate_email(self, field):
-        if User.query.filter_by(email=field.data).first():
+        if User.query().filter(User.email == field.data).get():
             raise ValidationError('Email already registered.')
 
     def validate_username(self, field):
-        if User.query.filter_by(username=field.data).first():
+        if User.query().filter(User.username == field.data).get():
             raise ValidationError('Username already in use.')
 
 
@@ -97,7 +97,7 @@ class ChangeUsernameForm(Form):
     submit = SubmitField('Update Username')
 
     def validate_username(self, field):
-        if User.query.filter_by(username=field.data).first():
+        if User.query().filter(User.username == field.data).get():
             raise ValidationError('Username already in use.')
 
 
@@ -124,7 +124,7 @@ class PasswordResetForm(Form):
     submit = SubmitField('Reset Password')
 
     def validate_email(self, field):
-        if User.query.filter_by(email=field.data).first() is None:
+        if User.query().filter(User.email == field.data).get() is None:
             raise ValidationError('Unknown email address.')
 
 
@@ -135,5 +135,5 @@ class ChangeEmailForm(RedirectForm):
     submit = SubmitField('Update Email Address')
 
     def validate_email(self, field):
-        if User.query.filter_by(email=field.data).first():
+        if User.query().filter(User.email == field.data).get():
             raise ValidationError('Email already registered.')
