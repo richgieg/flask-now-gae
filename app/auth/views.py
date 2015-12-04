@@ -6,7 +6,7 @@ from flask.ext.login import login_user, logout_user, login_required, \
 from . import auth
 from .. import db, login_manager
 from ..decorators import fresh_admin_or_404
-from ..models import User, LogEvent
+from ..models import User
 from ..email import send_email
 from ..messages import AuthMessages, flash_it
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, \
@@ -35,7 +35,6 @@ def before_request():
     if current_user.is_authenticated:
         current_user.ping()
         if not current_user.verify_auth_token(session.get('auth_token')):
-            LogEvent.session_bad_auth_token(current_user)
             logout_user()
             flash_it(AuthMessages.SESSION_EXPIRED)
             return redirect(url_for('auth.login'))
@@ -88,10 +87,7 @@ def login():
         if user is not None and verify_password(user, form.password.data):
             login_user(user, form.remember_me.data)
             session['auth_token'] = user.auth_token
-            LogEvent.log_in(user)
             return form.redirect('main.index')
-        elif user is None:
-            LogEvent.incorrect_email()
         flash_it(AuthMessages.INVALID_CREDENTIALS)
     return render_template('auth/login.html', form=form)
 
@@ -107,7 +103,6 @@ def reauthenticate():
     if form.validate_on_submit():
         if verify_password(current_user, form.password.data):
             confirm_login()
-            LogEvent.reauthenticate(current_user)
             return form.redirect('main.index')
         flash_it(AuthMessages.INVALID_PASSWORD)
     return render_template('auth/reauthenticate.html', form=form)
@@ -116,7 +111,6 @@ def reauthenticate():
 @auth.route('/logout')
 @login_required
 def logout():
-    LogEvent.log_out(current_user)
     logout_user()
     flash_it(AuthMessages.LOG_OUT)
     return redirect(url_for('main.index'))
@@ -132,7 +126,6 @@ def register():
     # this check, is it possible that the number of users could be one greater
     # than APP_MAX_USERS?
     if not User.can_register():
-        LogEvent.register_account_blocked()
         return render_template('auth/register_disabled.html')
     form = RegistrationForm()
     if form.validate_on_submit():
@@ -141,7 +134,6 @@ def register():
                     password=form.password.data)
         db.session.add(user)
         db.session.commit()
-        LogEvent.register_account(user)
         token = user.generate_confirmation_token()
         send_email(user.email, 'Confirm Your Account',
                    'auth/email/confirm', user=user, token=token)
@@ -217,7 +209,6 @@ def password_reset_request():
         if user:
             if not user.enabled:
                 flash_it(AuthMessages.PASSWORD_RESET_REQUEST_DISABLED_ACCOUNT)
-                LogEvent.password_reset_request_disabled_account(user)
             else:
                 token = user.generate_reset_token()
                 send_email(user.email, 'Reset Your Password',
@@ -282,19 +273,3 @@ def change_email(token):
         flash_it(AuthMessages.INVALID_CONFIRMATION_LINK)
     return redirect(url_for('main.user',
                             username=current_user.username))
-
-
-@auth.route('/event-log')
-@fresh_admin_or_404
-def event_log():
-    try:
-        records = int(request.args.get('records'))
-    except (TypeError, ValueError):
-        records = 25
-    events = (
-        LogEvent.query
-            .order_by(LogEvent.logged_at.desc())
-            .limit(records)
-            .all()
-    )
-    return render_template('auth/event_log.html', events=events)

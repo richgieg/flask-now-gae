@@ -29,6 +29,8 @@ class UserModelTestCase(unittest.TestCase):
 
     def test_password_verification(self):
         u = User(password='cat')
+        db.session.add(u)
+        db.session.commit()
         self.assertTrue(u.verify_password('cat'))
         self.assertFalse(u.verify_password('dog'))
 
@@ -237,6 +239,8 @@ class UserModelTestCase(unittest.TestCase):
 
     def test_new_user_account_is_enabled(self):
         u = User(password='cat')
+        db.session.add(u)
+        db.session.commit()
         self.assertTrue(u.enabled)
 
     def test_verify_password_fails_when_account_is_disabled(self):

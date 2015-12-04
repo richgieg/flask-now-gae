@@ -23,361 +23,6 @@ class Permission:
     ADMINISTER = 0x80
 
 
-class LogEventType(db.Model):
-    __tablename__ = 'log_event_types'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), unique=True)
-    context = db.Column(db.String(64))
-    events = db.relationship('LogEvent', backref='type')
-    # The id values must not be changed.
-    EVENT_TYPES = {
-        'log_in': {'id': 1, 'context': 'info'},
-        'log_out': {'id': 2, 'context': 'info'},
-        'reauthenticate': {'id': 3, 'context': 'info'},
-        'incorrect_password': {'id': 4, 'context': 'warning'},
-        'incorrect_email': {'id': 5, 'context': 'warning'},
-        'account_confirmed': {'id': 50, 'context': 'info'},
-        'account_unconfirmed': {'id': 51, 'context': 'info'},
-        'account_locked': {'id': 6, 'context': 'info'},
-        'account_unlocked': {'id': 7, 'context': 'success'},
-        'account_disabled': {'id': 8, 'context': 'info'},
-        'account_enabled': {'id': 9, 'context': 'success'},
-        'login_attempt_while_account_locked': {'id': 10, 'context': 'warning'},
-        'register_account': {'id': 11, 'context': 'info'},
-        'register_account_blocked': {'id': 12, 'context': 'info'},
-        'confirm_account_request': {'id': 13, 'context': 'info'},
-        'confirm_account_complete': {'id': 14, 'context': 'success'},
-        'confirm_account_token_expired': {'id': 15, 'context': 'warning'},
-        'confirm_account_token_invalid': {'id': 16, 'context': 'danger'},
-        'confirm_account_user_id_spoof': {'id': 17, 'context': 'danger'},
-        'session_bad_auth_token': {'id': 18, 'context': 'warning'},
-        'remember_me_bad_auth_token': {'id': 19, 'context': 'warning'},
-        'remember_me_cookie_malformed': {'id': 20, 'context': 'danger'},
-        'remember_me_authenticated': {'id': 21, 'context': 'info'},
-        'password_change': {'id': 22, 'context': 'info'},
-        'username_change': {'id': 23, 'context': 'info'},
-        'email_change_request': {'id': 24, 'context': 'info'},
-        'email_change_complete': {'id': 25, 'context': 'success'},
-        'email_change_token_expired': {'id': 26, 'context': 'warning'},
-        'email_change_token_invalid': {'id': 27, 'context': 'danger'},
-        'email_change_user_id_spoof': {'id': 28, 'context': 'danger'},
-        'password_reset_request': {'id': 29, 'context': 'info'},
-        'password_reset_complete': {'id': 30, 'context': 'success'},
-        'password_reset_token_expired': {'id': 31, 'context': 'warning'},
-        'password_reset_token_invalid': {'id': 32, 'context': 'danger'},
-        'password_reset_user_id_spoof': {'id': 33, 'context': 'danger'},
-        'login_attempt_while_account_disabled': {
-            'id': 34,
-            'context': 'warning'
-        },
-        'account_locked_by_failed_logins': {
-            'id': 35,
-            'context': 'danger'
-        },
-        'password_reset_request_disabled_account': {
-            'id': 36,
-            'context': 'warning'
-        },
-    }
-
-    @staticmethod
-    def insert_event_types():
-        for name, data in LogEventType.EVENT_TYPES.iteritems():
-            event_type = LogEventType.query.get(data['id'])
-            if event_type is None:
-                event_type = LogEventType(id=data['id'])
-            event_type.name = name
-            event_type.context = data['context']
-            db.session.add(event_type)
-        db.session.commit()
-
-    def __repr__(self):
-        return '<LogEventType %r>' % self.name
-
-
-class LogEvent(db.Model):
-    __tablename__ = 'log_events'
-    id = db.Column(db.Integer, primary_key=True)
-    type_id = db.Column(db.Integer, db.ForeignKey('log_event_types.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    ip_address = db.Column(db.String(48))
-    logged_at = db.Column(db.DateTime(), default=datetime.utcnow)
-
-    @staticmethod
-    def _log(type_id, user=None):
-        if current_app.config['APP_EVENT_LOGGING']:
-            event = LogEvent(type_id=type_id, user=user,
-                             ip_address=request.remote_addr)
-            db.session.add(event)
-            db.session.commit()
-
-    @staticmethod
-    def log_in(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['log_in']['id'],
-            user
-        )
-
-    @staticmethod
-    def log_out(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['log_out']['id'],
-            user
-        )
-
-    @staticmethod
-    def register_account(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['register_account']['id'],
-            user
-        )
-
-    @staticmethod
-    def confirm_account_complete(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['confirm_account_complete']['id'],
-            user
-        )
-
-    @staticmethod
-    def reauthenticate(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['reauthenticate']['id'],
-            user
-        )
-
-    @staticmethod
-    def remember_me_bad_auth_token():
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['remember_me_bad_auth_token']['id']
-        )
-
-    @staticmethod
-    def remember_me_cookie_malformed():
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['remember_me_cookie_malformed']['id']
-        )
-
-    @staticmethod
-    def remember_me_authenticated(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['remember_me_authenticated']['id'],
-            user
-        )
-
-    @staticmethod
-    def session_bad_auth_token(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['session_bad_auth_token']['id'],
-            user
-        )
-
-    @staticmethod
-    def incorrect_password(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['incorrect_password']['id'],
-            user
-        )
-
-    @staticmethod
-    def incorrect_email():
-        LogEvent._log(LogEventType.EVENT_TYPES['incorrect_email']['id'])
-
-    @staticmethod
-    def password_change(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['password_change']['id'],
-            user
-        )
-
-    @staticmethod
-    def username_change(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['username_change']['id'],
-            user
-        )
-
-    @staticmethod
-    def email_change_request(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['email_change_request']['id'],
-            user
-        )
-
-    @staticmethod
-    def email_change_complete(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['email_change_complete']['id'],
-            user
-        )
-
-    @staticmethod
-    def password_reset_request(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['password_reset_request']['id'],
-            user
-        )
-
-    @staticmethod
-    def password_reset_complete(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['password_reset_complete']['id'],
-            user
-        )
-
-    @staticmethod
-    def account_confirmed(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['account_confirmed']['id'],
-            user
-        )
-
-    @staticmethod
-    def account_unconfirmed(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['account_unconfirmed']['id'],
-            user
-        )
-
-    @staticmethod
-    def account_locked(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['account_locked']['id'],
-            user
-        )
-
-    @staticmethod
-    def account_unlocked(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['account_unlocked']['id'],
-            user
-        )
-
-    @staticmethod
-    def account_disabled(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['account_disabled']['id'],
-            user
-        )
-
-    @staticmethod
-    def account_enabled(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['account_enabled']['id'],
-            user
-        )
-
-    @staticmethod
-    def login_attempt_while_account_locked(user):
-        LogEvent._log(
-            (LogEventType.EVENT_TYPES
-                ['login_attempt_while_account_locked']['id']),
-            user
-        )
-
-    @staticmethod
-    def login_attempt_while_account_disabled(user):
-        LogEvent._log(
-            (LogEventType.EVENT_TYPES
-                ['login_attempt_while_account_disabled']['id']),
-            user
-        )
-
-    @staticmethod
-    def confirm_account_token_expired(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['confirm_account_token_expired']['id'],
-            user
-        )
-
-    @staticmethod
-    def confirm_account_token_invalid(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['confirm_account_token_invalid']['id'],
-            user
-        )
-
-    @staticmethod
-    def confirm_account_user_id_spoof(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['confirm_account_user_id_spoof']['id'],
-            user
-        )
-
-    @staticmethod
-    def email_change_token_expired(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['email_change_token_expired']['id'],
-            user
-        )
-
-    @staticmethod
-    def email_change_token_invalid(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['email_change_token_invalid']['id'],
-            user
-        )
-
-    @staticmethod
-    def email_change_user_id_spoof(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['email_change_user_id_spoof']['id'],
-            user
-        )
-
-    @staticmethod
-    def password_reset_token_expired(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['password_reset_token_expired']['id'],
-            user
-        )
-
-    @staticmethod
-    def password_reset_token_invalid(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['password_reset_token_invalid']['id'],
-            user
-        )
-
-    @staticmethod
-    def password_reset_user_id_spoof(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['password_reset_user_id_spoof']['id'],
-            user
-        )
-
-    @staticmethod
-    def confirm_account_request(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['confirm_account_request']['id'],
-            user
-        )
-
-    @staticmethod
-    def register_account_blocked():
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['register_account_blocked']['id']
-        )
-
-    @staticmethod
-    def account_locked_by_failed_logins(user):
-        LogEvent._log(
-            LogEventType.EVENT_TYPES['account_locked_by_failed_logins']['id'],
-            user
-        )
-
-    @staticmethod
-    def password_reset_request_disabled_account(user):
-        LogEvent._log(
-            (LogEventType.EVENT_TYPES
-                ['password_reset_request_disabled_account']['id']),
-            user
-        )
-
-    def __repr__(self):
-        return '<LogEvent %r>' % self.type.name
-
-
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
@@ -431,7 +76,6 @@ class User(UserMixin, db.Model):
     failed_login_attempts = db.Column(db.Integer, default=0)
     _locked = db.Column(db.Boolean, default=False)
     _enabled = db.Column(db.Boolean, default=True)
-    log_events = db.relationship('LogEvent', backref='user')
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -464,28 +108,19 @@ class User(UserMixin, db.Model):
     def password(self, password):
         self.password_hash = generate_password_hash(password)
         self.update_auth_token()
-        LogEvent.password_change(self)
 
     def verify_password(self, password):
         if not AccountPolicy.LOCKOUT_POLICY_ENABLED:
             if check_password_hash(self.password_hash, password):
                 return True
             else:
-                LogEvent.incorrect_password(self)
                 return False
         if self.locked or not self.enabled:
-            if not check_password_hash(self.password_hash, password):
-                LogEvent.incorrect_password(self)
-            if self.locked:
-                LogEvent.login_attempt_while_account_locked(self)
-            if not self.enabled:
-                LogEvent.login_attempt_while_account_disabled(self)
             return False
         if check_password_hash(self.password_hash, password):
             self.last_failed_login_attempt = None
             self.failed_login_attempts = 0
             return True
-        LogEvent.incorrect_password(self)
         if self.last_failed_login_attempt:
             if ((datetime.utcnow() - self.last_failed_login_attempt) >
                     AccountPolicy.RESET_THRESHOLD_AFTER):
@@ -494,7 +129,6 @@ class User(UserMixin, db.Model):
         self.failed_login_attempts += 1
         if self.failed_login_attempts == AccountPolicy.LOCKOUT_THRESHOLD:
             self.locked = True
-            LogEvent.account_locked_by_failed_logins(self)
         return False
 
     @hybrid_property
@@ -505,10 +139,8 @@ class User(UserMixin, db.Model):
     def confirmed(self, confirmed):
         if confirmed and not self._confirmed:
             self._confirmed = True
-            LogEvent.account_confirmed(self)
         elif not confirmed and self._confirmed:
             self._confirmed = False
-            LogEvent.account_unconfirmed(self)
 
     @property
     def locked(self):
@@ -520,12 +152,10 @@ class User(UserMixin, db.Model):
             self._locked = True
             # Invalidate sessions and remember cookies.
             self.randomize_auth_token()
-            LogEvent.account_locked(self)
         elif not locked and self._locked:
             self._locked = False
             self.failed_login_attempts = 0
             self.last_failed_login_attempt = None
-            LogEvent.account_unlocked(self)
 
     @property
     def enabled(self):
@@ -535,17 +165,14 @@ class User(UserMixin, db.Model):
     def enabled(self, enabled):
         if enabled and not self._enabled:
             self._enabled = True
-            LogEvent.account_enabled(self)
 
         elif not enabled and self._enabled:
             self._enabled = False
             # Invalidate sessions and remember cookies.
             self.randomize_auth_token()
-            LogEvent.account_disabled(self)
 
     def generate_confirmation_token(self, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        LogEvent.confirm_account_request(self)
         return s.dumps({'confirm': self.id})
 
     def confirm(self, token):
@@ -553,21 +180,16 @@ class User(UserMixin, db.Model):
         try:
             data = s.loads(token)
         except SignatureExpired:
-            LogEvent.confirm_account_token_expired(self)
             return False
         except BadSignature:
-            LogEvent.confirm_account_token_invalid(self)
             return False
         if data.get('confirm') != self.id:
-            LogEvent.confirm_account_user_id_spoof(self)
             return False
         self.confirmed = True
-        LogEvent.confirm_account_complete(self)
         return True
 
     def generate_reset_token(self, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        LogEvent.password_reset_request(self)
         return s.dumps({'reset': self.id})
 
     def reset_password(self, token, new_password):
@@ -575,21 +197,16 @@ class User(UserMixin, db.Model):
         try:
             data = s.loads(token)
         except SignatureExpired:
-            LogEvent.password_reset_token_expired(self)
             return False
         except BadSignature:
-            LogEvent.password_reset_token_invalid(self)
             return False
         if data.get('reset') != self.id:
-            LogEvent.password_reset_user_id_spoof(self)
             return False
         self.password = new_password
-        LogEvent.password_reset_complete(self)
         return True
 
     def generate_email_change_token(self, new_email, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        LogEvent.email_change_request(self)
         return s.dumps({'change_email': self.id, 'new_email': new_email})
 
     def change_email(self, token):
@@ -597,13 +214,10 @@ class User(UserMixin, db.Model):
         try:
             data = s.loads(token)
         except SignatureExpired:
-            LogEvent.email_change_token_expired(self)
             return False
         except BadSignature:
-            LogEvent.email_change_token_invalid(self)
             return False
         if data.get('change_email') != self.id:
-            LogEvent.email_change_user_id_spoof(self)
             return False
         new_email = data.get('new_email')
         if new_email is None:
@@ -613,13 +227,11 @@ class User(UserMixin, db.Model):
         self.email = new_email
         self.update_avatar_hash()
         self.update_auth_token()
-        LogEvent.email_change_complete(self)
         return True
 
     def change_username(self, username):
         self.username = username
         self.update_auth_token()
-        LogEvent.username_change(self)
 
     def can(self, permissions):
         return self.role is not None and \
@@ -701,12 +313,7 @@ def load_user_from_signed_token(signed_token):
         user = User.query.filter_by(auth_token=auth_token).first()
         if user:
             session['auth_token'] = user.auth_token
-            LogEvent.remember_me_authenticated(user)
             return user
-        else:
-            LogEvent.remember_me_bad_auth_token()
-    else:
-        LogEvent.remember_me_cookie_malformed()
     # This causes Flask-Login to clear the "remember me" cookie. This could
     # break if Flask-Login's internal implementation changes. A better way
     # should be implemented. Perhaps install an after_request hook.
