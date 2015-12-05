@@ -43,7 +43,8 @@ def before_request():
                 request.endpoint[:5] != 'auth.' and
                 request.endpoint != 'static'):
             return redirect(url_for('auth.unconfirmed'))
-    elif User.query().count() == 0 and request.endpoint != 'auth.register':
+    elif (User.query().count() == 0 and request.endpoint != 'auth.register' and
+            not User.is_registration_in_memcache()):
         flash_it(Messages.INITIAL_REGISTRATION)
         return redirect(url_for('auth.register'))
 
@@ -138,12 +139,8 @@ def register():
         return render_template('register_disabled.html')
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(email=form.email.data,
-                    username=form.username.data)
-        user.password = form.password.data
-        user.put()
-        profile = Profile(parent=user.key)
-        profile.put()
+        user = User.register(form.email.data, form.username.data,
+                             form.password.data)
         if not current_app.config['APP_OPEN_REGISTRATION']:
             Invite.remove(user.email)
         token = user.generate_confirmation_token()

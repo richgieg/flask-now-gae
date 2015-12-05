@@ -5,6 +5,7 @@ from itsdangerous import Signer, TimedJSONWebSignatureSerializer as Serializer,\
     SignatureExpired, BadSignature
 from flask import current_app, request, session
 from flask.ext.login import UserMixin, AnonymousUserMixin, make_secure_token
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from .. import login_manager
 from ..main.models import Profile
@@ -145,6 +146,30 @@ class User(UserMixin, ndb.Model):
                 self.role = Role.query().filter(Role.default == True).get()
         self.update_avatar_hash()
         self.update_auth_token()
+
+    @staticmethod
+    def is_registration_in_memcache():
+        return memcache.get(key='registration')
+
+    @staticmethod
+    def register(email, username, password):
+        user = User(email=email, username=username)
+        user.password = password
+        try:
+            User.pvt_register(user)
+        except:
+            return None
+        memcache.add(key='registration', value=True, time=60)
+        return user
+
+    @staticmethod
+    @ndb.transactional
+    def pvt_register(user):
+        """Ensures that the user and profile entities are both created
+        successfully, or neither is created."""
+        user.put()
+        profile = Profile(parent=user.key)
+        profile.put()
 
     @staticmethod
     def get_users(order):
