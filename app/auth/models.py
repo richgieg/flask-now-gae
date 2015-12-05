@@ -150,7 +150,10 @@ class User(UserMixin, ndb.Model):
     @staticmethod
     def is_registration_in_memcache():
         try:
-            return memcache.get(key='registration')
+            if memcache.get(key='registration'):
+                return True
+            else:
+                return False
         except:
             return False
 
