@@ -99,8 +99,7 @@ class Invite(ndb.Model):
                   .filter(Invite.created < cutoff)
                   .fetch()
         )
-        for invite in stale_invites:
-            invite.key.delete()
+        ndb.delete_multi([invite.key for invite in stale_invites])
 
     @staticmethod
     def is_pending(email):
