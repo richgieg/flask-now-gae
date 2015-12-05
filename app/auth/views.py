@@ -1,3 +1,4 @@
+from datetime import datetime
 from urlparse import urlparse, urlunparse
 from flask import render_template, redirect, request, url_for, session, \
     make_response, current_app, abort
@@ -8,8 +9,8 @@ from ..main.models import Profile
 from . import auth
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, \
     PasswordResetRequestForm, PasswordResetForm, ChangeEmailForm, \
-    ChangeUsernameForm, ReauthenticationForm, EditUserForm
-from .decorators import admin_required
+    ChangeUsernameForm, ReauthenticationForm, EditUserForm, InviteUserForm
+from .decorators import fresh_admin_or_404
 from .messages import Messages
 from .models import Invite, Role, User
 
@@ -287,8 +288,7 @@ def change_email(token):
 
 
 @auth.route('/edit-user/<int:id>', methods=['GET', 'POST'])
-@fresh_login_required
-@admin_required
+@fresh_admin_or_404
 def edit_user(id):
     user = User.get(id)
     if not user:
@@ -311,3 +311,15 @@ def edit_user(id):
     form.confirmed.data = user.confirmed
     form.role.data = user.role.id
     return render_template('edit_user.html', form=form, user=user)
+
+
+@auth.route('/invite', methods=['GET', 'POST'])
+@fresh_admin_or_404
+def invite_user():
+    form = InviteUserForm()
+    if form.validate_on_submit():
+        Invite.create(form.email.data)
+        flash_it(Messages.USER_INVITED)
+        return form.redirect()
+    expire = datetime.utcnow() + current_app.config['APP_INVITE_TTL']
+    return render_template('invite_user.html', form=form, expire=expire)

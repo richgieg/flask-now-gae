@@ -48,7 +48,7 @@ class RedirectForm(Form):
         if request.method == 'GET' and request.referrer != request.url:
             self.next.data = request.referrer
 
-    def redirect(self, endpoint='index', **values):
+    def redirect(self, endpoint='main.index', **values):
         for target in request.args.get('next'), self.next.data:
             if target and is_safe_redirect_url(target):
                 return redirect(target)
@@ -174,3 +174,12 @@ class EditUserForm(Form):
         if field.data != self.user.username and \
                 User.query().filter(User.username == field.data).get():
             raise ValidationError('Username already in use')
+
+class InviteUserForm(RedirectForm):
+    email = StringField('Email', validators=[Required(), Length(1, 64),
+                                                 Email()])
+    submit = SubmitField('Invite')
+
+    def validate_email(self, field):
+        if User.query().filter(User.email == field.data).get():
+            raise ValidationError('Email already registered')
