@@ -125,9 +125,11 @@ class User(UserMixin, ndb.Model):
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
         if self.role is None:
-            if self.email == current_app.config['APP_ADMIN']:
+            # The first user to register is an administrator
+            if User.query().count() == 0:
                 self.role = Role.query().filter(Role.permissions == 0xff).get()
-            if self.role is None:
+            # Otherwise, the user gets assigned the default role
+            else:
                 self.role = Role.query().filter(Role.default == True).get()
         self.update_avatar_hash()
         self.update_auth_token()

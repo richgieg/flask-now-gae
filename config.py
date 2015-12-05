@@ -14,8 +14,6 @@ class Config:
         app_identity.get_application_id())
     APP_MAIL_SENDER = '{} <{}>'.format(APP_MAIL_NAME, APP_MAIL_ADDRESS)
     APP_MAIL_SUBJECT_PREFIX = '[{}]'.format(APP_TITLE)
-    # Email address for the primary site administrator user account.
-    APP_ADMIN = os.environ.get('APP_ADMIN')
     # Allow new users to register.
     APP_ALLOW_NEW_USERS = True
     # A value of 0 means unlimited.

@@ -16,10 +16,8 @@ handlers:
 env_variables:
   ######   DEVELOPMENT
   FLASK_CONFIG: 'development'
-  APP_ADMIN: 'you@example.com'
   SECRET_KEY: 'the development key'
 
   ######   PRODUCTION
   # FLASK_CONFIG: 'production'
-  # APP_ADMIN: 'you@example.com'
   # SECRET_KEY: 'a super-secret long and random value'
