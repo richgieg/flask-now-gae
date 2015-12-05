@@ -135,6 +135,7 @@ def register():
     # completed registration form at the exact same time and both move beyond
     # this check, is it possible that the number of users could be one greater
     # than APP_MAX_USERS?
+    # TODO Update: A memcache-based solution could work here
     if not User.can_register():
         return render_template('register_disabled.html')
     form = RegistrationForm()
