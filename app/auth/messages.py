@@ -34,6 +34,10 @@ class Messages:
         'Your email is updated',
         FlashCategory.SUCCESS
     )
+    INITIAL_REGISTRATION = (
+        'You must register your admin account',
+        FlashCategory.INFO
+    )
     INVALID_CONFIRMATION_LINK = (
         'This link is invalid or has expired',
         FlashCategory.DANGER

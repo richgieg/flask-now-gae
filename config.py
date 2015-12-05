@@ -17,9 +17,12 @@ class Config:
     # Allow new users to register.
     APP_ALLOW_NEW_USERS = True
     # A value of 0 means unlimited.
-    APP_MAX_USERS = 2
+    APP_MAX_USERS = 10
     # If false, users must be invited by an administrator.
-    APP_OPEN_REGISTRATION = True
+    APP_OPEN_REGISTRATION = False
+    # Time-to-live for a user registration invitation. This only has
+    # an effect if APP_OPEN_REGISTRATION is false.
+    APP_INVITE_TTL = timedelta(minutes=15)
 
     ###########################################################################
     # [ Flask ]

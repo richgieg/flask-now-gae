@@ -42,6 +42,9 @@ def before_request():
                 request.endpoint[:5] != 'auth.' and
                 request.endpoint != 'static'):
             return redirect(url_for('auth.unconfirmed'))
+    elif User.query().count() == 0 and request.endpoint != 'auth.register':
+        flash_it(Messages.INITIAL_REGISTRATION)
+        return redirect(url_for('auth.register'))
 
 
 @auth.after_app_request
@@ -118,10 +121,10 @@ def logout():
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
-    # If open registration is disabled and there are no pending
-    # registration invitations, return 404.
+    # If open registration is disabled, there are no pending registration
+    # invites, and there is at least one registered user, return 404.
     if (not current_app.config['APP_OPEN_REGISTRATION'] and
-        not Invite.pending_invites()):
+        not Invite.pending_invites() and User.query().count() > 0):
         abort(404)
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))

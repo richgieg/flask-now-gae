@@ -83,8 +83,11 @@ class RegistrationForm(Form):
     def validate_email(self, field):
         if User.query().filter(User.email == field.data).get():
             raise ValidationError('Email already registered')
+        # If open registration is disabled, there is at least one registered
+        # user, and the given email address is not on the pending invites
+        # list, raise ValidationError.
         if (not current_app.config['APP_OPEN_REGISTRATION'] and
-            not Invite.is_pending(field.data)):
+            User.query().count() > 0 and not Invite.is_pending(field.data)):
             raise ValidationError('Not on the invitation list')
 
     def validate_username(self, field):

@@ -82,7 +82,29 @@ class Invite(ndb.Model):
         Invite(email=email, parent=Invite.get_parent_key()).put()
 
     @staticmethod
+    def remove(email):
+        invite = (
+            Invite.query(ancestor=Invite.get_parent_key())
+                  .filter(Invite.email == email)
+                  .get()
+        )
+        if invite:
+            invite.key.delete()
+
+    @staticmethod
+    def remove_stale_invites():
+        cutoff = datetime.utcnow() - current_app.config['APP_INVITE_TTL']
+        stale_invites = (
+            Invite.query(ancestor=Invite.get_parent_key())
+                  .filter(Invite.created < cutoff)
+                  .fetch()
+        )
+        for invite in stale_invites:
+            invite.key.delete()
+
+    @staticmethod
     def is_pending(email):
+        Invite.remove_stale_invites()
         invite = (
             Invite.query(ancestor=Invite.get_parent_key())
                   .filter(Invite.email == email)
@@ -92,19 +114,10 @@ class Invite(ndb.Model):
 
     @staticmethod
     def pending_invites():
+        Invite.remove_stale_invites()
         if Invite.query(ancestor=Invite.get_parent_key()).get():
             return True
         return False
-
-    @staticmethod
-    def remove(email):
-        invite = (
-            Invite.query(ancestor=Invite.get_parent_key())
-                  .filter(Invite.email == email)
-                  .get()
-        )
-        if invite:
-            invite.key.delete()
 
 
 class User(UserMixin, ndb.Model):
