@@ -270,7 +270,7 @@ def change_email_request():
                                          username=current_user.username))
         else:
             flash_it(Messages.INVALID_PASSWORD)
-    return render_template("change_email.html", form=form)
+    return render_template('change_email.html', form=form)
 
 
 @auth.route('/change-email/<token>')
@@ -315,9 +315,12 @@ def edit_user(id):
 @fresh_admin_or_404
 def invite_user():
     form = InviteUserForm()
+    expire = datetime.utcnow() + current_app.config['APP_INVITE_TTL']
     if form.validate_on_submit():
-        Invite.create(form.email.data)
+        email = form.email.data
+        Invite.create(email)
+        send_email(email, 'You\'ve Been Invited!', 'email/invite',
+                   inviter=current_user, email=email, expire=expire)
         flash_it(Messages.USER_INVITED)
         return form.redirect()
-    expire = datetime.utcnow() + current_app.config['APP_INVITE_TTL']
     return render_template('invite_user.html', form=form, expire=expire)

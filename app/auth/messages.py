@@ -83,7 +83,7 @@ class Messages:
         FlashCategory.DANGER
     )
     USER_INVITED = (
-        'User may register for an account',
+        'Invitation has been sent',
         FlashCategory.SUCCESS
     )
     USER_UPDATED = (

@@ -1,0 +1,15 @@
+Dear {{ email }},
+
+A {{ config['APP_TITLE'] }} administrator, {{ inviter.email }}, has invited you to join!
+
+To register, please visit following link:
+
+{{ url_for('auth.register', _external=True) }}
+
+Invitation expires {{ expire }}.
+
+Sincerely,
+
+The {{ config['APP_TITLE'] }} Team
+
+Note: replies to this email address are not monitored.

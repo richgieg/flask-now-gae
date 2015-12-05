@@ -1,0 +1,9 @@
+<p>Dear {{ email }},</p>
+<p>A <b>{{ config['APP_TITLE'] }}</b> administrator, <b>{{ inviter.email }}</b>, has invited you to join!</p>
+<p>To register, <a href="{{ url_for('auth.register', _external=True) }}">click here</a>.</p>
+<p>Alternatively, you can paste the following link in your browser's address bar:</p>
+<p>{{ url_for('auth.register', _external=True) }}</p>
+<p><i>Invitation expires {{ expire }}.</i></p>
+<p>Sincerely,</p>
+<p>The {{ config['APP_TITLE'] }} Team</p>
+<p><small>Note: replies to this email address are not monitored.</small></p>
