@@ -122,13 +122,13 @@ def logout():
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
     # If open registration is disabled, there are no pending registration
     # invites, and there is at least one registered user, return 404.
     if (not current_app.config['APP_OPEN_REGISTRATION'] and
         not Invite.pending_invites() and User.query().count() > 0):
         abort(404)
-    if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
     # TODO: Fix possible synchronization issue. If the current number of users
     # is one less than APP_MAX_USERS, and two users happen to post back the
     # completed registration form at the exact same time and both move beyond
