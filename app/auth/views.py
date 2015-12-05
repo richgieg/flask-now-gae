@@ -316,7 +316,8 @@ def edit_user(id):
 @fresh_admin_or_404
 def invite_user():
     form = InviteUserForm()
-    expire = format_timedelta(current_app.config['APP_INVITE_TTL'], locale='en_US')
+    expire = format_timedelta(current_app.config['APP_INVITE_TTL'],
+                              locale='en_US')
     if form.validate_on_submit():
         email = form.email.data
         Invite.create(email)
