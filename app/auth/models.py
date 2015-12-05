@@ -149,7 +149,10 @@ class User(UserMixin, ndb.Model):
 
     @staticmethod
     def is_registration_in_memcache():
-        return memcache.get(key='registration')
+        try:
+            return memcache.get(key='registration')
+        except:
+            return False
 
     @staticmethod
     def register(email, username, password):
@@ -159,7 +162,10 @@ class User(UserMixin, ndb.Model):
             User.pvt_register(user)
         except:
             return None
-        memcache.add(key='registration', value=True, time=60)
+        try:
+            memcache.add(key='registration', value=True, time=60)
+        except:
+            pass
         return user
 
     @staticmethod
