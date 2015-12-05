@@ -20,7 +20,7 @@ class Config:
     APP_ALLOW_NEW_USERS = True
     # A value of 0 means unlimited.
     APP_MAX_USERS = 2
-    # If false, users can only be added by an administrator.
+    # If false, users must be invited by an administrator.
     APP_OPEN_REGISTRATION = True
 
     ###########################################################################
