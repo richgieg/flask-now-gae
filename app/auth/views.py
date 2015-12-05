@@ -134,11 +134,6 @@ def register():
         return render_template('register_disabled.html')
     form = RegistrationForm()
     if form.validate_on_submit():
-        # # If open registration is disabled and the email of the registration
-        # # attempt is not in the pending invites list, return 403.
-        # if not current_app.config['APP_OPEN_REGISTRATION']:
-        #     if not Invite.is_pending(form.email.data):
-        #         abort(403)
         user = User(email=form.email.data,
                     username=form.username.data)
         user.password = form.password.data
