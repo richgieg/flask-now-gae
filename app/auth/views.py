@@ -1,6 +1,6 @@
 from urlparse import urlparse, urlunparse
 from flask import render_template, redirect, request, url_for, session, \
-    make_response
+    make_response, current_app, abort
 from flask.ext.login import login_user, logout_user, login_required, \
     current_user, fresh_login_required, confirm_login, login_fresh
 from .. import flash_it, login_manager, send_email
@@ -11,7 +11,7 @@ from .forms import LoginForm, RegistrationForm, ChangePasswordForm, \
     ChangeUsernameForm, ReauthenticationForm, EditUserForm
 from .decorators import admin_required
 from .messages import Messages
-from .models import Role, User
+from .models import Invite, Role, User
 
 
 # Set Flask-Login flash messages.
@@ -118,6 +118,11 @@ def logout():
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
+    # If open registration is disabled and there are no pending
+    # registration invitations, return 404.
+    if (not current_app.config['APP_OPEN_REGISTRATION'] and
+        not Invite.pending_invites()):
+        abort(404)
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     # TODO: Fix possible synchronization issue. If the current number of users
@@ -129,12 +134,19 @@ def register():
         return render_template('register_disabled.html')
     form = RegistrationForm()
     if form.validate_on_submit():
+        # # If open registration is disabled and the email of the registration
+        # # attempt is not in the pending invites list, return 403.
+        # if not current_app.config['APP_OPEN_REGISTRATION']:
+        #     if not Invite.is_pending(form.email.data):
+        #         abort(403)
         user = User(email=form.email.data,
                     username=form.username.data)
         user.password = form.password.data
         user.put()
         profile = Profile(parent=user.key)
         profile.put()
+        if not current_app.config['APP_OPEN_REGISTRATION']:
+            Invite.remove(user.email)
         token = user.generate_confirmation_token()
         send_email(user.email, 'Confirm Your Account',
                    'email/confirm', user=user, token=token)

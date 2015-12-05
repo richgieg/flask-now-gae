@@ -16,7 +16,9 @@
         {{ wtf.quick_form(form) }}
         <br>
         <p><a href="{{ url_for('auth.password_reset_request') }}">Forgot your password?</a></p>
+        {% if config['APP_OPEN_REGISTRATION'] %}
         <p><a href="{{ url_for('auth.register') }}">Need an account?</a></p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

@@ -67,6 +67,46 @@ class Role(ndb.Model):
         return Role.query().fetch()
 
 
+class Invite(ndb.Model):
+    email = ndb.StringProperty()
+    created = ndb.DateTimeProperty(auto_now_add=True)
+
+    @staticmethod
+    def get_parent_key():
+        return ndb.Key('InvitationList', 'Main')
+
+    @staticmethod
+    def create(email):
+        # If old invite exists for the email address, remove it first.
+        Invite.remove(email)
+        Invite(email=email, parent=Invite.get_parent_key()).put()
+
+    @staticmethod
+    def is_pending(email):
+        invite = (
+            Invite.query(ancestor=Invite.get_parent_key())
+                  .filter(Invite.email == email)
+                  .get()
+        )
+        return invite is not None
+
+    @staticmethod
+    def pending_invites():
+        if Invite.query(ancestor=Invite.get_parent_key()).get():
+            return True
+        return False
+
+    @staticmethod
+    def remove(email):
+        invite = (
+            Invite.query(ancestor=Invite.get_parent_key())
+                  .filter(Invite.email == email)
+                  .get()
+        )
+        if invite:
+            invite.key.delete()
+
+
 class User(UserMixin, ndb.Model):
     email = ndb.StringProperty()
     username = ndb.StringProperty()

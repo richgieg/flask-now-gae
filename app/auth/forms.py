@@ -1,11 +1,11 @@
 from urlparse import urlparse
-from flask import request, url_for, redirect
+from flask import current_app, request, url_for, redirect
 from flask.ext.wtf import Form
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
     HiddenField, SelectField
 from wtforms.validators import Required, Length, Email, Regexp, EqualTo
 from wtforms import ValidationError
-from .models import Role, User
+from .models import Invite, Role, User
 
 
 def is_safe_redirect_url(target):
@@ -76,17 +76,20 @@ class RegistrationForm(Form):
                                           'Usernames must have only letters, '
                                           'numbers, dots or underscores')])
     password = PasswordField('Password', validators=[Length(8, 64),
-        Required(), EqualTo('password2', message='Passwords must match.')])
+        Required(), EqualTo('password2', message='Passwords must match')])
     password2 = PasswordField('Confirm password', validators=[Required()])
     submit = SubmitField('Register')
 
     def validate_email(self, field):
         if User.query().filter(User.email == field.data).get():
-            raise ValidationError('Email already registered.')
+            raise ValidationError('Email already registered')
+        if (not current_app.config['APP_OPEN_REGISTRATION'] and
+            not Invite.is_pending(field.data)):
+            raise ValidationError('Not on the invitation list')
 
     def validate_username(self, field):
         if User.query().filter(User.username == field.data).get():
-            raise ValidationError('Username already in use.')
+            raise ValidationError('Username already in use')
 
 
 class ChangeUsernameForm(Form):
@@ -99,13 +102,13 @@ class ChangeUsernameForm(Form):
 
     def validate_username(self, field):
         if User.query().filter(User.username == field.data).get():
-            raise ValidationError('Username already in use.')
+            raise ValidationError('Username already in use')
 
 
 class ChangePasswordForm(RedirectForm):
     current_password = PasswordField('Current Password', validators=[Required()])
     password = PasswordField('New Password', validators=[Length(8, 64),
-        Required(), EqualTo('password2', message='Passwords must match.')])
+        Required(), EqualTo('password2', message='Passwords must match')])
     password2 = PasswordField('Confirm New Password', validators=[Required()])
     submit = SubmitField('Update Password')
 
@@ -120,13 +123,13 @@ class PasswordResetForm(Form):
     email = StringField('Email', validators=[Required(), Length(1, 64),
                                              Email()])
     password = PasswordField('New Password', validators=[Length(8, 64),
-        Required(), EqualTo('password2', message='Passwords must match.')])
+        Required(), EqualTo('password2', message='Passwords must match')])
     password2 = PasswordField('Confirm Password', validators=[Required()])
     submit = SubmitField('Reset Password')
 
     def validate_email(self, field):
         if User.query().filter(User.email == field.data).get() is None:
-            raise ValidationError('Unknown email address.')
+            raise ValidationError('Unknown email address')
 
 
 class ChangeEmailForm(RedirectForm):
@@ -137,7 +140,7 @@ class ChangeEmailForm(RedirectForm):
 
     def validate_email(self, field):
         if User.query().filter(User.email == field.data).get():
-            raise ValidationError('Email already registered.')
+            raise ValidationError('Email already registered')
 
 
 class EditUserForm(Form):
@@ -162,9 +165,9 @@ class EditUserForm(Form):
     def validate_email(self, field):
         if field.data != self.user.email and \
                 User.query().filter(User.email == field.data).get():
-            raise ValidationError('Email already registered.')
+            raise ValidationError('Email already registered')
 
     def validate_username(self, field):
         if field.data != self.user.username and \
                 User.query().filter(User.username == field.data).get():
-            raise ValidationError('Username already in use.')
+            raise ValidationError('Username already in use')
