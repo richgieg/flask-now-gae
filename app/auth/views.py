@@ -1,5 +1,6 @@
 from datetime import datetime
 from urlparse import urlparse, urlunparse
+from babel.dates import format_timedelta
 from flask import render_template, redirect, request, url_for, session, \
     make_response, current_app, abort
 from flask.ext.login import login_user, logout_user, login_required, \
@@ -315,7 +316,7 @@ def edit_user(id):
 @fresh_admin_or_404
 def invite_user():
     form = InviteUserForm()
-    expire = datetime.utcnow() + current_app.config['APP_INVITE_TTL']
+    expire = format_timedelta(current_app.config['APP_INVITE_TTL'], locale='en_US')
     if form.validate_on_submit():
         email = form.email.data
         Invite.create(email)

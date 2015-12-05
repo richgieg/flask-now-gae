@@ -6,7 +6,7 @@ To register, please visit following link:
 
 {{ url_for('auth.register', _external=True) }}
 
-Invitation expires {{ expire }} (UTC).
+Invitation expires {{ expire }} from when it was originally created.
 
 Sincerely,
 

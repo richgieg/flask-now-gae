@@ -3,7 +3,7 @@
 <p>To register, <a href="{{ url_for('auth.register', _external=True) }}">click here</a>.</p>
 <p>Alternatively, you can paste the following link in your browser's address bar:</p>
 <p>{{ url_for('auth.register', _external=True) }}</p>
-<p><i>Invitation expires {{ expire }} (UTC).</i></p>
+<p><i>Invitation expires {{ expire }} from when it was originally created.</i></p>
 <p>Sincerely,</p>
 <p>The {{ config['APP_TITLE'] }} Team</p>
 <p><small>Note: replies to this email address are not monitored.</small></p>

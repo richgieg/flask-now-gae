@@ -15,7 +15,10 @@
     <div class="col-md-4">
         {{ wtf.quick_form(form) }}
         <br>
-        The invitation will expire {{ moment(expire).fromNow() }}.
+        {#
+            The invitation will expire {{ moment(expire).fromNow() }}.
+        #}
+        The invitation will expire {{ expire }} after being sent.
     </div>
 </div>
 {% endblock %}

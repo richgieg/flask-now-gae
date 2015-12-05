@@ -10,3 +10,4 @@ Flask-Bootstrap==3.3.5.7
 Flask-Login==0.3.2
 Flask-Moment==0.5.1
 Flask-WTF==0.12
+babel==2.1.1
