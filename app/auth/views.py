@@ -186,8 +186,7 @@ def change_username():
             current_user.change_username(form.username.data)
             session['auth_token'] = current_user.auth_token
             flash_it(Messages.USERNAME_UPDATED)
-            return redirect(url_for('main.user',
-                                    username=current_user.username))
+            return redirect(url_for('main.index'))
         else:
             flash_it(Messages.INVALID_PASSWORD)
     return render_template("change_username.html", form=form)
@@ -203,8 +202,7 @@ def change_password():
             current_user.put()
             session['auth_token'] = current_user.auth_token
             flash_it(Messages.PASSWORD_UPDATED)
-            return form.redirect(url_for('main.user',
-                                         username=current_user.username))
+            return form.redirect(url_for('main.index'))
         else:
             flash_it(Messages.INVALID_PASSWORD)
     return render_template("change_password.html", form=form)
@@ -267,8 +265,7 @@ def change_email_request():
                        'email/change_email',
                        user=current_user, token=token)
             flash_it(Messages.EMAIL_CHANGE_REQUEST)
-            return form.redirect(url_for('main.user',
-                                         username=current_user.username))
+            return form.redirect(url_for('main.index'))
         else:
             flash_it(Messages.INVALID_PASSWORD)
     return render_template('change_email.html', form=form)
@@ -282,8 +279,7 @@ def change_email(token):
         flash_it(Messages.EMAIL_UPDATED)
     else:
         flash_it(Messages.INVALID_CONFIRMATION_LINK)
-    return redirect(url_for('main.user',
-                            username=current_user.username))
+    return redirect(url_for('main.index'))
 
 
 @auth.route('/edit-user/<int:id>', methods=['GET', 'POST'])
@@ -302,7 +298,7 @@ def edit_user(id):
         user.role = Role.get(form.role.data)
         user.put()
         flash_it(Messages.USER_UPDATED)
-        return redirect(url_for('main.user', username=user.username))
+        return redirect(url_for('auth.edit_user', id=user.id))
     form.email.data = user.email
     form.username.data = user.username
     form.enabled.data = user.enabled

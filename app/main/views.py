@@ -13,21 +13,13 @@ def index():
     return render_template('index.html')
 
 
-@main.route('/user/<username>')
-def user(username):
+@main.route('/profile/<username>')
+def profile(username):
     user = User.query().filter(User.username == username).get()
     if not user:
         abort(404)
-    return render_template('user.html', user=user, profile=user.get_profile())
-
-
-@main.route('/users')
-def users():
-    if current_user.is_administrator():
-        users = User.get_users(order=User.username)
-    else:
-        users = User.get_confirmed_users(order=User.username)
-    return render_template('users.html', users=users)
+    return render_template('profile.html', user=user,
+                           profile=user.get_profile())
 
 
 @main.route('/edit-profile', methods=['GET', 'POST'])
@@ -41,7 +33,7 @@ def edit_profile():
         profile.about_me = form.about_me.data
         profile.put()
         flash_it(Messages.PROFILE_UPDATED)
-        return redirect(url_for('.user', username=current_user.username))
+        return redirect(url_for('.profile', username=current_user.username))
     form.name.data = profile.name
     form.location.data = profile.location
     form.about_me.data = profile.about_me
