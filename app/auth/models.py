@@ -53,7 +53,7 @@ class Role(ndb.Model):
 class Invite(ndb.Model):
     email = ndb.StringProperty()
     inviter = ndb.StringProperty()
-    created = ndb.DateTimeProperty(auto_now_add=True)
+    expires = ndb.DateTimeProperty()
 
     @staticmethod
     def get_parent_key():
@@ -63,7 +63,8 @@ class Invite(ndb.Model):
     def create(email, inviter):
         # If old invite exists for the email address, remove it first.
         Invite.remove(email)
-        Invite(email=email, inviter=inviter,
+        expires = datetime.utcnow() + current_app.config['APP_INVITE_TTL']
+        Invite(email=email, inviter=inviter, expires=expires,
                parent=Invite.get_parent_key()).put()
 
     @staticmethod
@@ -78,10 +79,9 @@ class Invite(ndb.Model):
 
     @staticmethod
     def remove_stale_invites():
-        cutoff = datetime.utcnow() - current_app.config['APP_INVITE_TTL']
         stale_invites = (
             Invite.query(ancestor=Invite.get_parent_key())
-                  .filter(Invite.created < cutoff)
+                  .filter(Invite.expires <= datetime.utcnow())
                   .fetch()
         )
         ndb.delete_multi([invite.key for invite in stale_invites])

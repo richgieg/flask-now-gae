@@ -13,7 +13,7 @@ indexes:
 - kind: Invite
   ancestor: yes
   properties:
-  - name: created
+  - name: expires
 
 - kind: User
   properties:
