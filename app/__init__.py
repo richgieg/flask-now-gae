@@ -1,9 +1,11 @@
 from urlparse import urlparse
-from flask import current_app, flash, Flask, render_template, request
+from flask import current_app, flash, Flask, render_template, redirect, request
 from flask.ext.bootstrap import Bootstrap
-from flask.ext.moment import Moment
 from flask.ext.login import LoginManager
+from flask.ext.moment import Moment
+from flask.ext.wtf import Form
 from google.appengine.api import mail
+from wtforms import HiddenField
 from config import config
 
 
@@ -94,3 +96,18 @@ def is_safe_redirect_url(target):
             '//' not in target_url.path):
         return True
     return False
+
+
+class RedirectForm(Form):
+    next = HiddenField()
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+        if request.method == 'GET' and request.referrer != request.url:
+            self.next.data = request.referrer
+
+    def redirect(self, endpoint='main.index', **values):
+        for target in request.args.get('next'), self.next.data:
+            if target and is_safe_redirect_url(target):
+                return redirect(target)
+        return redirect(url_for(endpoint, **values))
