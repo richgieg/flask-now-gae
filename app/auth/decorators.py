@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import abort
 from flask.ext.login import current_user, fresh_login_required
-from .models import Permission
+from .settings import Permission
 
 
 def permission_required(permission):

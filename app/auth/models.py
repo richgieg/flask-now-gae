@@ -9,19 +9,7 @@ from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from .. import login_manager, send_email
 from ..main.models import Profile
-from .settings import AccountPolicy, Permission
-
-
-roles = {
-    'User': (Permission.FOLLOW |
-             Permission.COMMENT |
-             Permission.WRITE_ARTICLES, True),
-    'Moderator': (Permission.FOLLOW |
-                  Permission.COMMENT |
-                  Permission.WRITE_ARTICLES |
-                  Permission.MODERATE_COMMENTS, False),
-    'Administrator': (0xff, False)
-}
+from .settings import AccountPolicy, Permission, UserRoles
 
 
 class Role(ndb.Model):
@@ -38,12 +26,12 @@ class Role(ndb.Model):
 
     @staticmethod
     def insert_roles():
-        for r in roles:
+        for r in UserRoles.ROLES:
             role = Role.query().filter(Role.name == r).get()
             if role is None:
                 role = Role(name=r)
-            role.permissions = roles[r][0]
-            role.default = roles[r][1]
+            role.permissions = UserRoles.ROLES[r][0]
+            role.default = UserRoles.ROLES[r][1]
             role.put()
 
     @staticmethod
