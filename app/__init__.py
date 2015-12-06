@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from urlparse import urlparse
 from flask import current_app, flash, Flask, render_template, redirect, \
     request, url_for
@@ -112,3 +113,20 @@ class RedirectForm(Form):
             if target and is_safe_redirect_url(target):
                 return redirect(target)
         return redirect(url_for(endpoint, **values))
+
+
+def round_datetime(dt=None, round_to=60):
+    """Round a datetime object to any time lapse in seconds.
+
+    Args:
+        dt: The datetime object to round, default utcnow.
+        roundTo: Closest number of seconds to round to, default 1 minute.
+
+    Author: Thierry Husson (2012)
+    Updated: Richard Gieg (2015)
+    """
+    if not dt:
+        dt = datetime.utcnow()
+    seconds = (dt - dt.min).seconds
+    rounding = (seconds + round_to / 2) // round_to * round_to
+    return dt + timedelta(0, rounding - seconds, -dt.microsecond)

@@ -23,6 +23,9 @@ class Config:
     # Time-to-live for a user registration invitation. This only has
     # an effect if APP_OPEN_REGISTRATION is false.
     APP_INVITE_TTL = timedelta(minutes=15)
+    # Days-to-live for a user account that has been disabled. The account will
+    # be removed after the number of days has passed.
+    APP_EXPIRED_USER_DTL = 15
 
     ###########################################################################
     # [ Flask ]

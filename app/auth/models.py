@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import Signer, TimedJSONWebSignatureSerializer as Serializer,\
@@ -126,8 +126,9 @@ class User(UserMixin, ndb.Model):
     last_seen = ndb.DateTimeProperty(auto_now_add=True)
     avatar_hash = ndb.StringProperty(indexed=False)
     auth_token = ndb.StringProperty()
-    last_failed_login_attempt = ndb.DateTimeProperty(default=None)
+    last_failed_login_attempt = ndb.DateTimeProperty()
     failed_login_attempts = ndb.IntegerProperty(default=0)
+    expires = ndb.DateTimeProperty()
     pvt__confirmed = ndb.BooleanProperty(default=False)
     pvt__locked = ndb.BooleanProperty(default=False)
     pvt__enabled = ndb.BooleanProperty(default=True)
@@ -292,9 +293,17 @@ class User(UserMixin, ndb.Model):
     @enabled.setter
     def enabled(self, enabled):
         if enabled and not self.pvt__enabled:
+            self.expires = None
             self.pvt__enabled = True
         elif not enabled and self.pvt__enabled:
             self.pvt__enabled = False
+            # Set user expiration date, which adds the number of days specified
+            # in APP_EXPIRED_USER_DTL to tomorrow (at midnight).
+            expires = (
+                datetime.utcnow().date() +
+                timedelta(days=current_app.config['APP_EXPIRED_USER_DTL'] + 1)
+            )
+            self.expires = datetime(expires.year, expires.month, expires.day)
             # Invalidate sessions and remember cookies.
             self.randomize_auth_token()
         self.put()

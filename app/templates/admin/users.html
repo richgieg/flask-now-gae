@@ -20,9 +20,10 @@
                     <th>Username</th>
                     <th>Role</th>
                     <th>Joined</th>
-                    <th>Enabled</th>
                     <th>Confirmed</th>
                     <th>Locked</th>
+                    <th>Enabled</th>
+                    <th>Expires</th>
                 </tr>
             </thead>
             <tbody>
@@ -36,13 +37,6 @@
                     <td>{{ user.username }}</td>
                     <td>{{ roles[user.role_key] }}</td>
                     <td>{{ user.member_since }}</td>
-                    {% if not user.enabled %}
-                    <td class="danger">
-                    {% else %}
-                    <td>
-                    {% endif %}
-                        {{ user.enabled }}
-                    </td>
 
                     {% if not user.confirmed %}
                     <td class="danger">
@@ -58,6 +52,24 @@
                     <td>
                     {% endif %}
                         {{ user.locked }}
+                    </td>
+
+                    {% if not user.enabled %}
+                    <td class="danger">
+                    {% else %}
+                    <td>
+                    {% endif %}
+                        {{ user.enabled }}
+                    </td>
+
+                    {% if not user.enabled %}
+                    <td class="danger">
+                    {% else %}
+                    <td>
+                    {% endif %}
+                        {% if user.expires %}
+                        {{ user.expires }}
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
