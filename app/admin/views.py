@@ -15,9 +15,17 @@ def index():
     return render_template('admin/index.html')
 
 
-@admin.route('/edit-user/<int:id>', methods=['GET', 'POST'])
+@admin.route('/users')
 @fresh_admin_or_404
-def edit_user(id):
+def users():
+    users = User.get_users(order=User.email)
+    roles = Role.get_dict()
+    return render_template('admin/users.html', users=users, roles=roles)
+
+
+@admin.route('/user/<int:id>', methods=['GET', 'POST'])
+@fresh_admin_or_404
+def user(id):
     user = User.get(id)
     if not user:
         abort(404)
@@ -31,14 +39,14 @@ def edit_user(id):
         user.role = Role.get(form.role.data)
         user.put()
         flash_it(Messages.USER_UPDATED)
-        return redirect(url_for('admin.edit_user', id=user.id))
+        return redirect(url_for('admin.user', id=user.id))
     form.email.data = user.email
     form.username.data = user.username
     form.enabled.data = user.enabled
     form.locked.data = user.locked
     form.confirmed.data = user.confirmed
     form.role.data = user.role.id
-    return render_template('admin/edit_user.html', form=form, user=user)
+    return render_template('admin/user.html', form=form, user=user)
 
 
 @admin.route('/invite', methods=['GET', 'POST'])

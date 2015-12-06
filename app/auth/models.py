@@ -67,6 +67,11 @@ class Role(ndb.Model):
         """Returns all Role entities."""
         return Role.query().fetch()
 
+    @staticmethod
+    def get_dict():
+        """Returns a dictionary that maps role keys to role names."""
+        return {r.key: r.name for r in Role.all()}
+
 
 class Invite(ndb.Model):
     email = ndb.StringProperty()
