@@ -42,7 +42,7 @@ class Role(ndb.Model):
     @staticmethod
     def all():
         """Returns all Role entities."""
-        return Role.query().fetch()
+        return Role.query().order(Role.name).fetch()
 
     @staticmethod
     def get_dict():
