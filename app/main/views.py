@@ -10,7 +10,7 @@ from .messages import Messages
 
 @main.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('main/index.html')
 
 
 @main.route('/profile/<username>')
@@ -18,7 +18,7 @@ def profile(username):
     user = User.query().filter(User.username == username).get()
     if not user:
         abort(404)
-    return render_template('profile.html', user=user,
+    return render_template('main/profile.html', user=user,
                            profile=user.get_profile())
 
 
@@ -37,4 +37,4 @@ def edit_profile():
     form.name.data = profile.name
     form.location.data = profile.location
     form.about_me.data = profile.about_me
-    return render_template('edit_profile.html', form=form)
+    return render_template('main/edit_profile.html', form=form)

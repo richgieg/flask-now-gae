@@ -129,7 +129,7 @@ class User(UserMixin, ndb.Model):
     last_seen = ndb.DateTimeProperty(auto_now_add=True)
     avatar_hash = ndb.StringProperty(indexed=False)
     auth_token = ndb.StringProperty()
-    last_failed_login_attempt = ndb.DateTimeProperty(auto_now_add=True)
+    last_failed_login_attempt = ndb.DateTimeProperty(default=None)
     failed_login_attempts = ndb.IntegerProperty(default=0)
     pvt__confirmed = ndb.BooleanProperty(default=False)
     pvt__locked = ndb.BooleanProperty(default=False)
