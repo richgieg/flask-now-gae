@@ -136,7 +136,7 @@ class Invite(ndb.Model):
         if invite:
             inviter = User.query().filter(User.email == invite.inviter).get()
             send_email(inviter.email, 'Your Invitee Has Registered!',
-                       'admin/email/invite_accepted', inviter=inviter,
+                       'auth/email/invite_accepted', inviter=inviter,
                        invitee=email)
 
 

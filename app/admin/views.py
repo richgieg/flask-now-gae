@@ -60,7 +60,7 @@ def invite_user():
     if form.validate_on_submit():
         email = form.email.data
         Invite.create(email, current_user.email)
-        send_email(email, 'You\'ve Been Invited!', 'admin/email/invite',
+        send_email(email, 'You\'ve Been Invited!', 'auth/email/invite',
                    inviter=current_user, email=email, expire=expire)
         flash_it(Messages.USER_INVITED)
         return form.redirect()
