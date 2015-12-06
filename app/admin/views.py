@@ -10,8 +10,8 @@ from .messages import Messages
 
 
 @admin.route('/')
-@fresh_login_required
 @admin_or_404
+@fresh_login_required
 def index():
     return render_template('admin/index.html')
 

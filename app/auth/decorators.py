@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import abort
+from flask import abort, redirect, url_for
 from flask.ext.login import current_user, login_fresh
 from .settings import Permission
 
@@ -38,6 +38,24 @@ def permission_or_404(permission):
     return decorator
 
 
+def permission_or_go_home(permission):
+    """Redirects to home if user doesn't have the specified permission level.
+
+    If not authenticated, the user is redirected to main.index. If the user is
+    authenticated but is not of the required permission level, they are
+    redirected to main.index. Otherwise, they are allowed to access the
+    decorated view.
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.can(permission):
+                return redirect(url_for('main.index'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
 def admin_or_403(f):
     """Returns 403 if the user is not an administrator.
 
@@ -56,6 +74,14 @@ def admin_or_404(f):
     access the decorated view.
     """
     return permission_or_404(Permission.ADMINISTER)(f)
+
+
+def admin_or_go_home(f):
+    """If not authenticated, the user is redirected to main.index. If the user
+    is authenticated but is not an administrator, they are redirected to
+    main.index. Otherwise, they are allowed to access the decorated view.
+    """
+    return permission_or_go_home(Permission.ADMINISTER)(f)
 
 
 def authenticated_or_404(f):
