@@ -7,7 +7,7 @@ from flask import current_app, request, session
 from flask.ext.login import UserMixin, AnonymousUserMixin, make_secure_token
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
-from .. import login_manager
+from .. import login_manager, send_email
 from ..main.models import Profile
 
 
@@ -75,6 +75,7 @@ class Role(ndb.Model):
 
 class Invite(ndb.Model):
     email = ndb.StringProperty()
+    inviter = ndb.StringProperty()
     created = ndb.DateTimeProperty(auto_now_add=True)
 
     @staticmethod
@@ -82,10 +83,11 @@ class Invite(ndb.Model):
         return ndb.Key('InvitationList', 'Main')
 
     @staticmethod
-    def create(email):
+    def create(email, inviter):
         # If old invite exists for the email address, remove it first.
         Invite.remove(email)
-        Invite(email=email, parent=Invite.get_parent_key()).put()
+        Invite(email=email, inviter=inviter,
+               parent=Invite.get_parent_key()).put()
 
     @staticmethod
     def remove(email):
@@ -123,6 +125,19 @@ class Invite(ndb.Model):
         if Invite.query(ancestor=Invite.get_parent_key()).get():
             return True
         return False
+
+    @staticmethod
+    def notify_inviter(email):
+        invite = (
+            Invite.query(ancestor=Invite.get_parent_key())
+                  .filter(Invite.email == email)
+                  .get()
+        )
+        if invite:
+            inviter = User.query().filter(User.email == invite.inviter).get()
+            send_email(inviter.email, 'Your Invitee Has Registered!',
+                       'admin/email/invite_accepted', inviter=inviter,
+                       invitee=email)
 
 
 class User(UserMixin, ndb.Model):

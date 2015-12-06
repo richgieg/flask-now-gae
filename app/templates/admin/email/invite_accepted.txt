@@ -1,0 +1,9 @@
+Dear {{ inviter.username }},
+
+The person you invited, {{ invitee }}, has registered for an account.
+
+Sincerely,
+
+The {{ config['APP_TITLE'] }} Team
+
+Note: replies to this email address are not monitored.

@@ -59,7 +59,7 @@ def invite_user():
                               locale='en_US')
     if form.validate_on_submit():
         email = form.email.data
-        Invite.create(email)
+        Invite.create(email, current_user.email)
         send_email(email, 'You\'ve Been Invited!', 'admin/email/invite',
                    inviter=current_user, email=email, expire=expire)
         flash_it(Messages.USER_INVITED)

@@ -141,7 +141,11 @@ def register():
     if form.validate_on_submit():
         user = User.register(form.email.data, form.username.data,
                              form.password.data)
+        # If open registration is disabled, the user must have been invited
+        # to register, so email a confirmation to the person who invited them,
+        # then remove their invite.
         if not current_app.config['APP_OPEN_REGISTRATION']:
+            Invite.notify_inviter(user.email)
             Invite.remove(user.email)
         token = user.generate_confirmation_token()
         send_email(user.email, 'Confirm Your Account',
