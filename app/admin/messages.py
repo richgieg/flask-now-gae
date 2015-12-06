@@ -19,6 +19,6 @@ class Messages:
         FlashCategory.SUCCESS
     )
     USER_UPDATED = (
-        'The user is updated',
+        'User has been updated',
         FlashCategory.SUCCESS
     )
