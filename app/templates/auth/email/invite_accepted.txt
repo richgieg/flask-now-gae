@@ -1,6 +1,6 @@
 Dear {{ inviter.username }},
 
-The person you invited, {{ invitee }}, has registered for an account.
+The person you invited, {{ invitee }}, has successfully created their account.
 
 Sincerely,
 
