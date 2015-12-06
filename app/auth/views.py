@@ -1,5 +1,4 @@
 from datetime import datetime
-from babel.dates import format_timedelta
 from flask import render_template, redirect, request, url_for, session, \
     make_response, current_app, abort
 from flask.ext.login import login_user, logout_user, login_required, \
@@ -9,7 +8,7 @@ from ..main.models import Profile
 from . import auth
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, \
     PasswordResetRequestForm, PasswordResetForm, ChangeEmailForm, \
-    ChangeUsernameForm, ReauthenticationForm, EditUserForm, InviteUserForm
+    ChangeUsernameForm, ReauthenticationForm
 from .decorators import fresh_admin_or_404
 from .messages import Messages
 from .models import Invite, Role, User
@@ -40,7 +39,7 @@ def before_request():
             flash_it(Messages.SESSION_EXPIRED)
             return redirect(url_for('auth.login'))
         if (not current_user.confirmed and
-                request.endpoint[:5] != 'auth.' and
+                (not request.endpoint or request.endpoint[:5] != 'auth.') and
                 request.endpoint != 'static'):
             return redirect(url_for('auth.unconfirmed'))
     elif (User.query().count() == 0 and request.endpoint != 'auth.register' and
@@ -279,45 +278,3 @@ def change_email(token):
     else:
         flash_it(Messages.INVALID_CONFIRMATION_LINK)
     return redirect(url_for('main.index'))
-
-
-@auth.route('/edit-user/<int:id>', methods=['GET', 'POST'])
-@fresh_admin_or_404
-def edit_user(id):
-    user = User.get(id)
-    if not user:
-        abort(404)
-    form = EditUserForm(user=user)
-    if form.validate_on_submit():
-        user.email = form.email.data
-        user.username = form.username.data
-        user.confirmed = form.confirmed.data
-        user.enabled = form.enabled.data
-        user.locked = form.locked.data
-        user.role = Role.get(form.role.data)
-        user.put()
-        flash_it(Messages.USER_UPDATED)
-        return redirect(url_for('auth.edit_user', id=user.id))
-    form.email.data = user.email
-    form.username.data = user.username
-    form.enabled.data = user.enabled
-    form.locked.data = user.locked
-    form.confirmed.data = user.confirmed
-    form.role.data = user.role.id
-    return render_template('auth/edit_user.html', form=form, user=user)
-
-
-@auth.route('/invite', methods=['GET', 'POST'])
-@fresh_admin_or_404
-def invite_user():
-    form = InviteUserForm()
-    expire = format_timedelta(current_app.config['APP_INVITE_TTL'],
-                              locale='en_US')
-    if form.validate_on_submit():
-        email = form.email.data
-        Invite.create(email)
-        send_email(email, 'You\'ve Been Invited!', 'auth/email/invite',
-                   inviter=current_user, email=email, expire=expire)
-        flash_it(Messages.USER_INVITED)
-        return form.redirect()
-    return render_template('auth/invite_user.html', form=form, expire=expire)

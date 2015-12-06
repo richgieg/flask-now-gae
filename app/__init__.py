@@ -1,5 +1,6 @@
 from urlparse import urlparse
-from flask import current_app, flash, Flask, render_template, redirect, request
+from flask import current_app, flash, Flask, render_template, redirect, \
+    request, url_for
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.login import LoginManager
 from flask.ext.moment import Moment

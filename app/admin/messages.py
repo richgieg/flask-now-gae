@@ -14,4 +14,11 @@ from .. import FlashCategory
 
 
 class Messages:
-    pass
+    USER_INVITED = (
+        'Invitation has been sent',
+        FlashCategory.SUCCESS
+    )
+    USER_UPDATED = (
+        'The user is updated',
+        FlashCategory.SUCCESS
+    )
