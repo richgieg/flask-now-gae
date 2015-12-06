@@ -38,6 +38,7 @@ def user(id):
         user.username = form.username.data
         user.confirmed = form.confirmed.data
         user.enabled = form.enabled.data
+        user.active = form.active.data
         user.locked = form.locked.data
         user.role = Role.get(form.role.data)
         user.put()
@@ -46,6 +47,7 @@ def user(id):
     form.email.data = user.email
     form.username.data = user.username
     form.enabled.data = user.enabled
+    form.active.data = user.active
     form.locked.data = user.locked
     form.confirmed.data = user.confirmed
     form.role.data = user.role.id

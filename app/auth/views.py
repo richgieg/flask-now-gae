@@ -34,7 +34,6 @@ def verify_password(user, password):
 @auth.before_app_request
 def before_request():
     if current_user.is_authenticated:
-        current_user.ping()
         if not current_user.verify_auth_token(session.get('auth_token')):
             logout_user()
             flash_it(Messages.SESSION_EXPIRED)
@@ -43,6 +42,10 @@ def before_request():
                 (not request.endpoint or request.endpoint[:5] != 'auth.') and
                 request.endpoint != 'static'):
             return redirect(url_for('auth.unconfirmed'))
+        current_user.ping()
+        if not current_user.active:
+            current_user.active = True
+            flash_it(Messages.ACCOUNT_REACTIVATED)
     elif (User.query().count() == 0 and request.endpoint != 'auth.register' and
             not User.is_registration_in_memcache()):
         flash_it(Messages.INITIAL_REGISTRATION)

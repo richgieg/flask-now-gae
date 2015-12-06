@@ -23,6 +23,7 @@
                     <th>Confirmed</th>
                     <th>Locked</th>
                     <th>Enabled</th>
+                    <th>Active</th>
                     <th>Expires</th>
                 </tr>
             </thead>
@@ -62,7 +63,15 @@
                         {{ user.enabled }}
                     </td>
 
-                    {% if not user.enabled %}
+                    {% if not user.active %}
+                    <td class="danger">
+                    {% else %}
+                    <td>
+                    {% endif %}
+                        {{ user.active }}
+                    </td>
+
+                    {% if not user.active %}
                     <td class="danger">
                     {% else %}
                     <td>

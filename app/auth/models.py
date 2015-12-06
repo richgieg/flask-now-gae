@@ -132,6 +132,7 @@ class User(UserMixin, ndb.Model):
     pvt__confirmed = ndb.BooleanProperty(default=False)
     pvt__locked = ndb.BooleanProperty(default=False)
     pvt__enabled = ndb.BooleanProperty(default=True)
+    pvt__active = ndb.BooleanProperty(default=True)
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -293,10 +294,24 @@ class User(UserMixin, ndb.Model):
     @enabled.setter
     def enabled(self, enabled):
         if enabled and not self.pvt__enabled:
-            self.expires = None
             self.pvt__enabled = True
         elif not enabled and self.pvt__enabled:
             self.pvt__enabled = False
+            # Invalidate sessions and remember cookies.
+            self.randomize_auth_token()
+        self.put()
+
+    @property
+    def active(self):
+        return self.pvt__active
+
+    @active.setter
+    def active(self, active):
+        if active and not self.pvt__active:
+            self.pvt__active = True
+            self.expires = None
+        elif not active and self.pvt__active:
+            self.pvt__active = False
             # Set user expiration date, which adds the number of days specified
             # in APP_EXPIRED_USER_DTL to tomorrow (at midnight).
             expires = (

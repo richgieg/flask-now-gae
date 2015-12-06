@@ -16,6 +16,7 @@ class EditUserForm(Form):
                                           'Usernames must have only letters, '
                                           'numbers, dots or underscores')])
     enabled = BooleanField('Enabled')
+    active = BooleanField('Active')
     locked = BooleanField('Locked')
     confirmed = BooleanField('Confirmed')
     role = SelectField('Role', coerce=int)
