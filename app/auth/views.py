@@ -6,10 +6,11 @@ from flask.ext.login import login_user, logout_user, login_required, \
 from .. import flash_it, login_manager, send_email
 from ..main.models import Profile
 from . import auth
+from .decorators import authenticated_or_404, needs_reauth_or_404, \
+    anonymous_or_404, needs_to_confirm_or_404
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, \
     PasswordResetRequestForm, PasswordResetForm, ChangeEmailForm, \
     ChangeUsernameForm, ReauthenticationForm
-from .decorators import fresh_admin_or_404
 from .messages import Messages
 from .models import Invite, Role, User
 
@@ -75,16 +76,14 @@ def disabled():
 
 
 @auth.route('/unconfirmed')
+@needs_to_confirm_or_404
 def unconfirmed():
-    if current_user.is_anonymous or current_user.confirmed:
-        return redirect(url_for('main.index'))
     return render_template('auth/unconfirmed.html')
 
 
 @auth.route('/login', methods=['GET', 'POST'])
+@anonymous_or_404
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query().filter(User.email == form.email.data).get()
@@ -97,12 +96,8 @@ def login():
 
 
 @auth.route('/reauthenticate', methods=['GET', 'POST'])
+@needs_reauth_or_404
 def reauthenticate():
-    # This isn't wrapped with login_required because it wouldn't make sense
-    # to require a login to access the reauthenticate page. Instead, the
-    # following if statement takes its place.
-    if not current_user.is_authenticated or login_fresh():
-        return redirect(url_for('main.index'))
     form = ReauthenticationForm()
     if form.validate_on_submit():
         if verify_password(current_user, form.password.data):
@@ -113,7 +108,7 @@ def reauthenticate():
 
 
 @auth.route('/logout')
-@login_required
+@authenticated_or_404
 def logout():
     logout_user()
     flash_it(Messages.LOG_OUT)
@@ -121,9 +116,8 @@ def logout():
 
 
 @auth.route('/register', methods=['GET', 'POST'])
+@anonymous_or_404
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
     # If open registration is disabled, there are no pending registration
     # invites, and there is at least one registered user, return 404.
     if (not current_app.config['APP_OPEN_REGISTRATION'] and
@@ -168,10 +162,8 @@ def confirm(token):
 
 
 @auth.route('/confirm')
-@login_required
+@needs_to_confirm_or_404
 def resend_confirmation():
-    if current_user.confirmed:
-        return redirect(url_for('main.index'))
     token = current_user.generate_confirmation_token()
     send_email(current_user.email, 'Confirm Your Account',
                'auth/email/confirm', user=current_user, token=token)
@@ -211,6 +203,7 @@ def change_password():
 
 
 @auth.route('/reset', methods=['GET', 'POST'])
+@anonymous_or_404
 def password_reset_request():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))

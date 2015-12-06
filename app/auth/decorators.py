@@ -1,14 +1,15 @@
 from functools import wraps
 from flask import abort
-from flask.ext.login import current_user, fresh_login_required
+from flask.ext.login import current_user, login_fresh
 from .settings import Permission
 
 
-def permission_required(permission):
-    """Prevents access from anyone but those with the specified permission.
+def permission_or_403(permission):
+    """Returns 403 if the user doesn't have the specified permission level.
 
-    If not authenticated, the user is allowed to authenticate. If the user is
-    not of the required permission level, 403 is returned.
+    If not authenticated, 403 is returned. If the user is authenticated but is
+    not of the required permission level, 403 is returned. Otherwise, they are
+    allowed to access the decorated view.
     """
     def decorator(f):
         @wraps(f)
@@ -20,31 +21,12 @@ def permission_required(permission):
     return decorator
 
 
-def admin_required(f):
-    """Prevents access from anyone but administrators.
-
-    If not authenticated, the user is allowed to authenticate. If the user
-    is not an administrator, 403 is returned.
-    """
-    return permission_required(Permission.ADMINISTER)(f)
-
-
-def fresh_admin_required(f):
-    """Prevents access from anyone but fresh administrators.
-
-    If not authenticated, the user is allowed to authenticate. If the user
-    is not an administrator, 403 is returned. If the user is already
-    authenticated and is an administrator, but they are stale (logged in from
-    a remember cookie), they will have to reauthenticate.
-    """
-    return fresh_login_required(admin_required(f))
-
-
 def permission_or_404(permission):
-    """Returns 404 to anyone but those with the specified permission.
+    """Returns 404 if the user doesn't have the specified permission level.
 
-    If not authenticated, the user will get a 404. If the user is authenticated
-    but is not of the required permission level, the user will get a 404.
+    If not authenticated, 404 is returned. If the user is authenticated but is
+    not of the required permission level, 404 is returned. Otherwise, they are
+    allowed to access the decorated view.
     """
     def decorator(f):
         @wraps(f)
@@ -56,21 +38,83 @@ def permission_or_404(permission):
     return decorator
 
 
-def admin_or_404(f):
-    """Returns 404 to anyone but administrators.
+def admin_or_403(f):
+    """Returns 403 if the user is not an administrator.
 
-    If not authenticated, the user will get a 404. If the user is authenticated
-    but is not an administrator, the user will get a 404.
+    If not authenticated, 403 is returned. If the user is authenticated but is
+    not an administrator, 403 is returned. Otherwise, they are allowed to
+    access the decorated view.
+    """
+    return permission_or_403(Permission.ADMINISTER)(f)
+
+
+def admin_or_404(f):
+    """Returns 404 if the user is not an administrator.
+
+    If not authenticated, 404 is returned. If the user is authenticated but is
+    not an administrator, 404 is returned. Otherwise, they are allowed to
+    access the decorated view.
     """
     return permission_or_404(Permission.ADMINISTER)(f)
 
 
-def fresh_admin_or_404(f):
-    """Returns 404 to anyone but fresh administrators.
+def authenticated_or_404(f):
+    """Returns 404 if the user is not currently authenticated.
 
-    If not authenticated, the user will get a 404. If the user is authenticated
-    but is not an administrator, the user will get a 404. If the user is an
-    administrator, but they are stale (logged in from a remember cookie),
-    they will have to reauthenticate.
+    This was specifically created to block the auth.login view if it's not
+    needed. It may also be useful for hiding other views that shouldn't need
+    to be accessed if the user isn't logged in.
     """
-    return admin_or_404(fresh_login_required(f))
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            abort(404)
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def anonymous_or_404(f):
+    """Returns 404 if the user is currently authenticated.
+
+    This was specifically created to block the auth.register view if it's not
+    needed. It may also be useful for hiding other views that shouldn't need
+    to be accessed if the user is logged in.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.is_authenticated:
+            abort(404)
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def needs_reauth_or_404(f):
+    """Returns 404 if the user has no need to reauthenticate.
+
+    Reauthentication is necessary if the user is currently authenticated and
+    the session is stale (authenticated with remember cookie). If either of
+    these conditions is false, 404 is returned. This was specifically created
+    to block the auth.reauthenticate view if it's not needed.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or login_fresh():
+            abort(404)
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def needs_to_confirm_or_404(f):
+    """Returns 404 if the user has no need to confirm their account.
+
+    Confirmation is necessary if the user is currently authenticated and
+    the the "confirmed" flag on their user entity is false. If either of
+    these conditions is false, 404 is returned. This was specifically created
+    to block the auth.unconfirmed view if it's not needed.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.confirmed:
+            abort(404)
+        return f(*args, **kwargs)
+    return decorated_function
