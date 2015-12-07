@@ -23,6 +23,10 @@ class ReauthenticationForm(RedirectForm):
     password = PasswordField('Password', validators=[Required()])
     submit = SubmitField('Submit')
 
+    def validate_password(self, field):
+        if not verify_password(current_user, field.data):
+            raise ValidationError('Invalid password')
+
 
 class RegistrationForm(Form):
     email = StringField('Email', validators=[Required(), Length(1, 64),

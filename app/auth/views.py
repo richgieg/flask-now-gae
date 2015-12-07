@@ -95,10 +95,8 @@ def login():
 def reauthenticate():
     form = ReauthenticationForm()
     if form.validate_on_submit():
-        if verify_password(current_user, form.password.data):
-            confirm_login()
-            return form.redirect('main.index')
-        flash_it(Messages.INVALID_PASSWORD)
+        confirm_login()
+        return form.redirect('main.index')
     return render_template('auth/reauthenticate.html', form=form)
 
 
@@ -278,10 +276,8 @@ def change_email(token):
 def deactivate():
     form = DeactivationForm()
     if form.validate_on_submit():
-        if verify_password(current_user, form.password.data):
-            current_user.active = False
-            logout_user()
-            flash_it(Messages.ACCOUNT_DEACTIVATED)
-            return redirect(url_for('main.index'))
-        flash_it(Messages.INVALID_PASSWORD)
+        current_user.active = False
+        logout_user()
+        flash_it(Messages.ACCOUNT_DEACTIVATED)
+        return redirect(url_for('main.index'))
     return render_template('auth/deactivate.html', form=form)
