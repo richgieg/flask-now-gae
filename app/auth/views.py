@@ -165,7 +165,7 @@ def resend_confirmation():
 
 
 @auth.route('/change-username', methods=['GET', 'POST'])
-@fresh_login_required
+@login_required
 def change_username():
     form = ChangeUsernameForm()
     if form.validate_on_submit():
@@ -177,7 +177,7 @@ def change_username():
 
 
 @auth.route('/change-password', methods=['GET', 'POST'])
-@fresh_login_required
+@login_required
 def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
@@ -236,7 +236,7 @@ def password_reset(token):
 
 
 @auth.route('/change-email', methods=['GET', 'POST'])
-@fresh_login_required
+@login_required
 def change_email_request():
     form = ChangeEmailForm()
     if form.validate_on_submit():
@@ -263,7 +263,6 @@ def change_email(token):
 
 @auth.route('/deactivate', methods=['GET', 'POST'])
 @authenticated_or_404
-@fresh_login_required
 def deactivate():
     form = DeactivationForm()
     if form.validate_on_submit():
