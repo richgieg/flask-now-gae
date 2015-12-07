@@ -29,9 +29,9 @@ class RemoveDeactivatedUserAccounts(webapp2.RequestHandler):
             ndb.delete_multi(profile_keys)
             body = '\n'.join([user.username for user in users])
             send_email_to_admins(
-                'RemoveDeactivatedUserAccounts succeeded!', body)
-        except:
-            send_email_to_admins('RemoveDeactivatedUserAccounts failed!')
+                'RemoveDeactivatedUserAccounts succeeded!', body=body)
+        except Exception as e:
+            send_email_to_admins('RemoveDeactivatedUserAccounts failed!' body=e)
 
 
 app = webapp2.WSGIApplication([
