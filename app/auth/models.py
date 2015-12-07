@@ -121,6 +121,7 @@ class User(UserMixin, ndb.Model):
     email = ndb.StringProperty()
     username = ndb.StringProperty()
     role_key = ndb.KeyProperty(kind=Role)
+    profile_key = ndb.KeyProperty(kind=Profile)
     password_hash = ndb.StringProperty(indexed=False)
     member_since = ndb.DateTimeProperty(auto_now_add=True)
     last_seen = ndb.DateTimeProperty(auto_now_add=True)
@@ -178,6 +179,28 @@ class User(UserMixin, ndb.Model):
         user.put()
         profile = Profile(parent=user.key)
         profile.put()
+        user.profile_key = profile.key
+        user.put()
+
+    @staticmethod
+    def get_keys(user_list):
+        """Returns two tuples of keys, for users and their associated profiles.
+
+        Iterates over the given list of users and compiles two tuples of keys.
+        The first tuple contains the user keys and the second contains the
+        profile keys.
+
+        Args:
+            user_list: List of user entities
+
+        Returns:
+            A tuple containing two tuples is returned, of user keys and profile
+            keys. If user_list is empty, then a tuple containing two empty
+            tuples is returned.
+        """
+        if not user_list:
+            return ((), ())
+        return zip(*[(u.key, u.profile_key) for u in user_list])
 
     @staticmethod
     def get_users(order=None):
@@ -194,14 +217,11 @@ class User(UserMixin, ndb.Model):
         return query.fetch()
 
     @staticmethod
-    def get_expired_users(order=None):
-        query = (
-            User.query(User.pvt__active == False)
-                .filter(User.expires <= datetime.utcnow())
-        )
-        if order:
-            query = query.order(order)
-        return query.fetch()
+    def get_expired_users():
+        return User.query(
+            User.pvt__active == False,
+            User.expires <= datetime.utcnow()
+        ).fetch()
 
     @staticmethod
     def get_admins(order=None):
