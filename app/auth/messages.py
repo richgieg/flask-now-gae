@@ -54,10 +54,6 @@ class Messages:
         'Bad username or password',
         FlashCategory.DANGER
     )
-    INVALID_PASSWORD = (
-        'Bad password',
-        FlashCategory.DANGER
-    )
     INVALID_PASSWORD_RESET_LINK = (
         'Password not updated due to invalid or expired token',
         FlashCategory.DANGER

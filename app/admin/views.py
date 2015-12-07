@@ -43,7 +43,7 @@ def user(id):
         user.role = Role.get(form.role.data)
         user.put()
         flash_it(Messages.USER_UPDATED)
-        return redirect(url_for('admin.user', id=user.id))
+        return form.redirect('admin.users')
     form.email.data = user.email
     form.username.data = user.username
     form.enabled.data = user.enabled
@@ -69,5 +69,5 @@ def invite_user():
         send_email(email, 'You\'ve Been Invited!', 'auth/email/invite',
                    inviter=current_user, email=email, expire=expire)
         flash_it(Messages.USER_INVITED)
-        return form.redirect()
+        return form.redirect('admin.index')
     return render_template('admin/invite_user.html', form=form, expire=expire)
