@@ -33,7 +33,8 @@ class RemoveDeactivatedUserAccounts(webapp2.RequestHandler):
             send_email_to_admins(
                 'RemoveDeactivatedUserAccounts succeeded!', body=body)
         except Exception as e:
-            send_email_to_admins('RemoveDeactivatedUserAccounts failed!' body=e)
+            send_email_to_admins(
+                'RemoveDeactivatedUserAccounts failed!', body=e)
 
 
 app = webapp2.WSGIApplication([
