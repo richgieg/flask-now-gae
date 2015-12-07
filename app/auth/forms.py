@@ -55,7 +55,7 @@ class RegistrationForm(Form):
             raise ValidationError('Username already in use')
 
 
-class ChangeUsernameForm(Form):
+class ChangeUsernameForm(RedirectForm):
     username = StringField('New Username', validators=[
         Required(), Length(1, 64), Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0,
                                           'Usernames must have only letters, '
@@ -112,6 +112,10 @@ class ChangeEmailForm(RedirectForm):
     def validate_email(self, field):
         if User.query().filter(User.email == field.data).get():
             raise ValidationError('Email already registered')
+
+    def validate_password(self, field):
+        if not verify_password(current_user, field.data):
+            raise ValidationError('Invalid password')
 
 
 class DeactivationForm(Form):

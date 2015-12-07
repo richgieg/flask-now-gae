@@ -240,16 +240,13 @@ def password_reset(token):
 def change_email_request():
     form = ChangeEmailForm()
     if form.validate_on_submit():
-        if verify_password(current_user, form.password.data):
-            new_email = form.email.data
-            token = current_user.generate_email_change_token(new_email)
-            send_email(new_email, 'Confirm Your Email Address',
-                       'auth/email/change_email',
-                       user=current_user, token=token)
-            flash_it(Messages.EMAIL_CHANGE_REQUEST)
-            return form.redirect(url_for('main.index'))
-        else:
-            flash_it(Messages.INVALID_PASSWORD)
+        new_email = form.email.data
+        token = current_user.generate_email_change_token(new_email)
+        send_email(new_email, 'Confirm Your Email Address',
+                   'auth/email/change_email',
+                   user=current_user, token=token)
+        flash_it(Messages.EMAIL_CHANGE_REQUEST)
+        return form.redirect(url_for('main.index'))
     return render_template('auth/change_email.html', form=form)
 
 
