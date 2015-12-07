@@ -26,6 +26,6 @@ env_variables:
   FLASK_CONFIG: 'development'
   SECRET_KEY: 'the development key'
 
-  ######   PRODUCTION
+  # ######   PRODUCTION
   # FLASK_CONFIG: 'production'
   # SECRET_KEY: 'a super-secret long and random value'

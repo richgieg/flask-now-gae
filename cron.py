@@ -24,6 +24,8 @@ class RemoveDeactivatedUserAccounts(webapp2.RequestHandler):
         """Removes all deactivated user accounts that have expired."""
         try:
             users = User.get_expired_users()
+            if not users:
+                return
             user_keys, profile_keys = User.get_keys(users)
             ndb.delete_multi(user_keys)
             ndb.delete_multi(profile_keys)
