@@ -10,7 +10,7 @@ from .decorators import authenticated_or_404, needs_reauth_or_404, \
     anonymous_or_404, needs_to_confirm_or_404
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, \
     PasswordResetRequestForm, PasswordResetForm, ChangeEmailForm, \
-    ChangeUsernameForm, ReauthenticationForm
+    ChangeUsernameForm, ReauthenticationForm, DeactivationForm
 from .messages import Messages
 from .models import Invite, Role, User
 
@@ -278,3 +278,18 @@ def change_email(token):
     else:
         flash_it(Messages.INVALID_CONFIRMATION_LINK)
     return redirect(url_for('main.index'))
+
+
+@auth.route('/deactivate', methods=['GET', 'POST'])
+@authenticated_or_404
+@fresh_login_required
+def deactivate():
+    form = DeactivationForm()
+    if form.validate_on_submit():
+        if verify_password(current_user, form.password.data):
+            current_user.active = False
+            logout_user()
+            flash_it(Messages.ACCOUNT_DEACTIVATED)
+            return redirect(url_for('main.index'))
+        flash_it(Messages.INVALID_PASSWORD)
+    return render_template('auth/deactivate.html', form=form)

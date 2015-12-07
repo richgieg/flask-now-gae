@@ -18,6 +18,10 @@ class Messages:
         'Your account is confirmed',
         FlashCategory.SUCCESS
     )
+    ACCOUNT_DEACTIVATED = (
+        'Your account is deactivated',
+        FlashCategory.INFO
+    )
     ACCOUNT_REACTIVATED = (
         'Your account is reactivated. Welcome back!',
         FlashCategory.SUCCESS

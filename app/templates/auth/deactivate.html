@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% set page_title = 'Account Deactivation' %}
+
+{% block page_content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="page-header">
+            <h1>Account Deactivation</h1>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <p><b>User accounts are removed {{ config['APP_EXPIRED_USER_DTL'] }} days after deactivation.</b> If you log back in before your account is removed, it will be reactivated.</p>
+
+        <p>To confirm deactivation, verify your password below.</p>
+        <br>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-4">
+        {{ wtf.quick_form(form) }}
+    </div>
+</div>
+{% endblock %}

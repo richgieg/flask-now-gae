@@ -1,5 +1,6 @@
 from urlparse import urlparse
 from flask import current_app, request, url_for, redirect
+from flask.ext.login import current_user
 from flask.ext.wtf import Form
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
     HiddenField, SelectField
@@ -98,3 +99,8 @@ class ChangeEmailForm(RedirectForm):
     def validate_email(self, field):
         if User.query().filter(User.email == field.data).get():
             raise ValidationError('Email already registered')
+
+
+class DeactivationForm(Form):
+    password = PasswordField('Password', validators=[Required()])
+    submit = SubmitField('Deactivate')
