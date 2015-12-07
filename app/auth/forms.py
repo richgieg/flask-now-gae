@@ -7,6 +7,7 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
 from wtforms.validators import Required, Length, Email, Regexp, EqualTo
 from wtforms import ValidationError
 from .. import RedirectForm
+from .helpers import verify_password
 from .models import Invite, Role, User
 
 
@@ -104,3 +105,7 @@ class ChangeEmailForm(RedirectForm):
 class DeactivationForm(Form):
     password = PasswordField('Password', validators=[Required()])
     submit = SubmitField('Deactivate')
+
+    def validate_password(self, field):
+        if not verify_password(current_user, field.data):
+            raise ValidationError('Invalid password')

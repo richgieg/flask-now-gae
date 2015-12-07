@@ -11,6 +11,7 @@ from .decorators import authenticated_or_404, needs_reauth_or_404, \
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, \
     PasswordResetRequestForm, PasswordResetForm, ChangeEmailForm, \
     ChangeUsernameForm, ReauthenticationForm, DeactivationForm
+from .helpers import verify_password
 from .messages import Messages
 from .models import Invite, Role, User
 
@@ -20,15 +21,6 @@ login_manager.login_message = Messages.LOGIN_REQUIRED[0]
 login_manager.login_message_category = Messages.LOGIN_REQUIRED[1]
 login_manager.needs_refresh_message = Messages.REFRESH_REQUIRED[0]
 login_manager.needs_refresh_message_category = Messages.REFRESH_REQUIRED[1]
-
-
-def verify_password(user, password):
-    is_valid_password = user.verify_password(password)
-    if user.locked:
-        session['_locked'] = True
-    if not user.enabled:
-        session['_disabled'] = True
-    return is_valid_password
 
 
 @auth.before_app_request
@@ -226,7 +218,7 @@ def password_reset_request():
         else:
             # This is just to trick anyone guessing email addresses.
             flash_it(Messages.PASSWORD_RESET_REQUEST)
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('main.index'))
     return render_template('auth/reset_password.html', form=form)
 
 
