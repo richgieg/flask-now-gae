@@ -1,0 +1,4 @@
+cron:
+- description: remove deactivated user accounts
+  url: /cron/remove_deactivated_user_accounts
+  schedule: every day 01:00

@@ -120,7 +120,7 @@ class Invite(ndb.Model):
 class User(UserMixin, ndb.Model):
     email = ndb.StringProperty()
     username = ndb.StringProperty()
-    role_key = ndb.KeyProperty(kind=Role, indexed=False)
+    role_key = ndb.KeyProperty(kind=Role)
     password_hash = ndb.StringProperty(indexed=False)
     member_since = ndb.DateTimeProperty(auto_now_add=True)
     last_seen = ndb.DateTimeProperty(auto_now_add=True)
@@ -180,15 +180,33 @@ class User(UserMixin, ndb.Model):
         profile.put()
 
     @staticmethod
-    def get_users(order):
+    def get_users(order=None):
         query = User.query()
         if order:
             query = query.order(order)
         return query.fetch()
 
     @staticmethod
-    def get_confirmed_users(order):
+    def get_confirmed_users(order=None):
         query = User.query().filter(User.pvt__confirmed == True)
+        if order:
+            query = query.order(order)
+        return query.fetch()
+
+    @staticmethod
+    def get_expired_users(order=None):
+        query = (
+            User.query(User.pvt__active == False)
+                .filter(User.expires <= datetime.utcnow())
+        )
+        if order:
+            query = query.order(order)
+        return query.fetch()
+
+    @staticmethod
+    def get_admins(order=None):
+        admin_role_key = Role.query(Role.name == 'Administrator').get().key
+        query = User.query(User.role_key == admin_role_key)
         if order:
             query = query.order(order)
         return query.fetch()

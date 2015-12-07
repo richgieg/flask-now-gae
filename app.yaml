@@ -5,6 +5,10 @@ api_version: 1
 threadsafe: yes
 
 handlers:
+- url: /cron/remove_deactivated_user_accounts
+  script: cron.app
+  login: admin
+
 - url: /static
   static_dir: app/static
   secure: always
@@ -12,6 +16,10 @@ handlers:
 - url: /.*
   script: main.app
   secure: always
+
+libraries:
+- name: webapp2
+  version: 2.5.2
 
 env_variables:
   ######   DEVELOPMENT

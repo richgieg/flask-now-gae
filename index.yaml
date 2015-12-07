@@ -17,5 +17,10 @@ indexes:
 
 - kind: User
   properties:
+  - name: pvt__active
+  - name: expires
+
+- kind: User
+  properties:
   - name: pvt__confirmed
   - name: username
