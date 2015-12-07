@@ -108,11 +108,11 @@ class RedirectForm(Form):
         if request.method == 'GET' and request.referrer != request.url:
             self.next.data = request.referrer
 
-    def redirect(self, endpoint='main.index', **values):
+    def redirect(self, default='main.index', **values):
         for target in request.args.get('next'), self.next.data:
             if target and is_safe_redirect_url(target):
                 return redirect(target)
-        return redirect(url_for(endpoint, **values))
+        return redirect(url_for(default, **values))
 
 
 def round_datetime(dt=None, round_to=60):
