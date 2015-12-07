@@ -181,14 +181,11 @@ def change_username():
 def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
-        if verify_password(current_user, form.current_password.data):
-            current_user.password = form.password.data
-            current_user.put()
-            session['auth_token'] = current_user.auth_token
-            flash_it(Messages.PASSWORD_UPDATED)
-            return form.redirect(url_for('main.index'))
-        else:
-            flash_it(Messages.INVALID_PASSWORD)
+        current_user.password = form.password.data
+        current_user.put()
+        session['auth_token'] = current_user.auth_token
+        flash_it(Messages.PASSWORD_UPDATED)
+        return form.redirect(url_for('main.index'))
     return render_template("auth/change_password.html", form=form)
 
 

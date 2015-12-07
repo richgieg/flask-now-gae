@@ -79,6 +79,10 @@ class ChangePasswordForm(RedirectForm):
     password2 = PasswordField('Confirm New Password', validators=[Required()])
     submit = SubmitField('Update Password')
 
+    def validate_current_password(self, field):
+        if not verify_password(current_user, field.data):
+            raise ValidationError('Invalid password')
+
 
 class PasswordResetRequestForm(Form):
     email = StringField('Email', validators=[Required(), Length(1, 64),
