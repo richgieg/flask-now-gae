@@ -67,6 +67,10 @@ class ChangeUsernameForm(Form):
         if User.query().filter(User.username == field.data).get():
             raise ValidationError('Username already in use')
 
+    def validate_password(self, field):
+        if not verify_password(current_user, field.data):
+            raise ValidationError('Invalid password')
+
 
 class ChangePasswordForm(RedirectForm):
     current_password = PasswordField('Current Password', validators=[Required()])

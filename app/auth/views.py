@@ -169,13 +169,10 @@ def resend_confirmation():
 def change_username():
     form = ChangeUsernameForm()
     if form.validate_on_submit():
-        if verify_password(current_user, form.password.data):
-            current_user.change_username(form.username.data)
-            session['auth_token'] = current_user.auth_token
-            flash_it(Messages.USERNAME_UPDATED)
-            return redirect(url_for('main.index'))
-        else:
-            flash_it(Messages.INVALID_PASSWORD)
+        current_user.change_username(form.username.data)
+        session['auth_token'] = current_user.auth_token
+        flash_it(Messages.USERNAME_UPDATED)
+        return redirect(url_for('main.index'))
     return render_template("auth/change_username.html", form=form)
 
 
