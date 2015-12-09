@@ -104,12 +104,30 @@ def anonymous_or_404(f):
 
     This was specifically created to block the auth.register view if it's not
     needed. It may also be useful for hiding other views that shouldn't need
-    to be accessed if the user is logged in.
+    to be accessed if the user is logged in. It's no longer used to block
+    auth.register due to unintended behavior of displaying a 404 page upon
+    initial login after the user registers (since the login page automatically
+    redirects to its referrer).
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if current_user.is_authenticated:
             abort(404)
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def anonymous_or_go_home(f):
+    """Redirects to home page if the user is currently authenticated.
+
+    This was specifically created to block the auth.register view if it's not
+    needed. It may also be useful for hiding other views that shouldn't need
+    to be accessed if the user is logged in.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.is_authenticated:
+            return redirect(url_for('main.index'))
         return f(*args, **kwargs)
     return decorated_function
 

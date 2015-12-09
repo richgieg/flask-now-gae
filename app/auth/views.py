@@ -7,7 +7,7 @@ from .. import flash_it, login_manager, send_email
 from ..main.models import Profile
 from . import auth
 from .decorators import authenticated_or_404, needs_reauth_or_404, \
-    anonymous_or_404, needs_to_confirm_or_404
+    anonymous_or_404, needs_to_confirm_or_404, anonymous_or_go_home
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, \
     PasswordResetRequestForm, PasswordResetForm, ChangeEmailForm, \
     ChangeUsernameForm, ReauthenticationForm, DeactivationForm
@@ -109,7 +109,7 @@ def logout():
 
 
 @auth.route('/register', methods=['GET', 'POST'])
-@anonymous_or_404
+@anonymous_or_go_home
 def register():
     # If open registration is disabled, there are no pending registration
     # invites, and there is at least one registered user, return 404.
