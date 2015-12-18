@@ -56,18 +56,6 @@ class User(UserMixin, ndb.Model):
     pvt__enabled = ndb.BooleanProperty(default=True)
     pvt__active = ndb.BooleanProperty(default=True)
 
-    def __init__(self, **kwargs):
-        super(User, self).__init__(**kwargs)
-        if self.role is None:
-            # The first user to register is an administrator
-            if User.query().count() == 0:
-                self.role = Role.query().filter(Role.permissions == 0xff).get()
-            # Otherwise, the user gets assigned the default role
-            else:
-                self.role = Role.query().filter(Role.default == True).get()
-        self.update_avatar_hash()
-        self.update_auth_token()
-
     def get_id(self):
         """Returns the User entity's key for Flask-Login."""
         return unicode(self.key.id())
@@ -97,30 +85,6 @@ class User(UserMixin, ndb.Model):
     def password(self, password):
         self.password_hash = generate_password_hash(password)
         self.update_auth_token()
-
-    def verify_password(self, password):
-        if not AccountPolicy.LOCKOUT_POLICY_ENABLED:
-            if check_password_hash(self.password_hash, password):
-                return True
-            else:
-                return False
-        if self.locked or not self.enabled:
-            return False
-        if check_password_hash(self.password_hash, password):
-            self.last_failed_login_attempt = None
-            self.failed_login_attempts = 0
-            self.put()
-            return True
-        if self.last_failed_login_attempt:
-            if ((datetime.utcnow() - self.last_failed_login_attempt) >
-                    AccountPolicy.RESET_THRESHOLD_AFTER):
-                self.failed_login_attempts = 0
-        self.last_failed_login_attempt = datetime.utcnow()
-        self.failed_login_attempts += 1
-        if self.failed_login_attempts == AccountPolicy.LOCKOUT_THRESHOLD:
-            self.locked = True
-        self.put()
-        return False
 
     @property
     def confirmed(self):

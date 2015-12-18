@@ -5,11 +5,12 @@ from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from itsdangerous import Signer, SignatureExpired, BadSignature, \
     TimedJSONWebSignatureSerializer as Serializer
+from werkzeug.security import check_password_hash
 
 from .. import login_manager, send_email
 from ..main.models import Profile
 from .models import Invite, Role, User
-from .settings import UserRoles
+from .settings import AccountPolicy, UserRoles
 
 
 class AuthController:
@@ -47,6 +48,31 @@ class AuthController:
     def ping_user(user):
         user.last_seen = datetime.utcnow()
         user.put()
+
+    @staticmethod
+    def verify_password(user, password):
+        if not AccountPolicy.LOCKOUT_POLICY_ENABLED:
+            if check_password_hash(user.password_hash, password):
+                return True
+            else:
+                return False
+        if user.locked or not user.enabled:
+            return False
+        if check_password_hash(user.password_hash, password):
+            user.last_failed_login_attempt = None
+            user.failed_login_attempts = 0
+            user.put()
+            return True
+        if user.last_failed_login_attempt:
+            if ((datetime.utcnow() - user.last_failed_login_attempt) >
+                    AccountPolicy.RESET_THRESHOLD_AFTER):
+                user.failed_login_attempts = 0
+        user.last_failed_login_attempt = datetime.utcnow()
+        user.failed_login_attempts += 1
+        if user.failed_login_attempts == AccountPolicy.LOCKOUT_THRESHOLD:
+            user.locked = True
+        user.put()
+        return False
 
     @staticmethod
     def generate_confirmation_token(user, expiration=3600):
@@ -137,6 +163,15 @@ class AuthController:
     def register(email, username, password):
         user = User(email=email, username=username)
         user.password = password
+        # The first user to register is always an administrator
+        if User.query().count() == 0:
+            user.role = Role.query().filter(Role.permissions == 0xff).get()
+        # Otherwise, the user gets assigned the default role
+        else:
+            user.role = Role.query().filter(Role.default == True).get()
+        user.update_avatar_hash()
+        user.update_auth_token()
+
         try:
             AuthController._register(user)
         except:
