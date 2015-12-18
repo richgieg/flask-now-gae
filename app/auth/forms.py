@@ -7,6 +7,7 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
 from wtforms.validators import Required, Length, Email, Regexp, EqualTo
 from wtforms import ValidationError
 from .. import RedirectForm
+from .controllers import AuthController
 from .helpers import verify_password
 from .models import Invite, Role, User
 
@@ -47,7 +48,8 @@ class RegistrationForm(Form):
         # user, and the given email address is not on the pending invites
         # list, raise ValidationError.
         if (not current_app.config['APP_OPEN_REGISTRATION'] and
-            User.query().count() > 0 and not Invite.is_pending(field.data)):
+            (User.query().count() > 0 and
+                not AuthController.is_invite_pending(field.data))):
             raise ValidationError('Not on the invitation list')
 
     def validate_username(self, field):

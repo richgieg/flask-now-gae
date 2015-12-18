@@ -2,8 +2,9 @@ from babel.dates import format_timedelta
 from flask import abort, current_app, redirect, render_template, url_for
 from flask.ext.login import current_user, fresh_login_required
 from .. import flash_it, send_email
+from ..auth.controllers import AuthController
 from ..auth.decorators import admin_or_404
-from ..auth.models import Invite, Role, User
+from ..auth.models import Invite, User
 from . import admin
 from .forms import EditUserForm, InviteUserForm
 from .messages import Messages
@@ -20,8 +21,8 @@ def index():
 @admin_or_404
 @fresh_login_required
 def users():
-    users = User.get_users(order=User.email)
-    roles = Role.get_dict()
+    users = AuthController.get_users(order=User.email)
+    roles = AuthController.get_roles_dict()
     return render_template('admin/users.html', users=users, roles=roles)
 
 
@@ -29,7 +30,7 @@ def users():
 @admin_or_404
 @fresh_login_required
 def user(id):
-    user = User.get(id)
+    user = AuthController.get_user(id)
     if not user:
         abort(404)
     form = EditUserForm(user=user)
@@ -40,7 +41,7 @@ def user(id):
         user.enabled = form.enabled.data
         user.active = form.active.data
         user.locked = form.locked.data
-        user.role = Role.get(form.role.data)
+        user.role = AuthController.get_role(form.role.data)
         user.put()
         flash_it(Messages.USER_UPDATED)
         return form.redirect('admin.users')
@@ -65,7 +66,7 @@ def invite_user():
                               locale='en_US')
     if form.validate_on_submit():
         email = form.email.data
-        Invite.create(email, current_user.email)
+        AuthController.create_invite(email, current_user.email)
         send_email(email, 'You\'ve Been Invited!', 'auth/email/invite',
                    inviter=current_user, email=email, expire=expire)
         flash_it(Messages.USER_INVITED)

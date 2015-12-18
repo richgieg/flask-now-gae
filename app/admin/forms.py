@@ -6,6 +6,7 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
 from wtforms.validators import Required, Length, Email, Regexp, EqualTo
 from wtforms import ValidationError
 from .. import RedirectForm
+from ..auth.controllers import AuthController
 from ..auth.helpers import verify_password
 from ..auth.models import Invite, Role, User
 
@@ -28,7 +29,7 @@ class EditUserForm(RedirectForm):
     def __init__(self, user, *args, **kwargs):
         super(EditUserForm, self).__init__(*args, **kwargs)
         self.role.choices = [(role.id, role.name)
-                             for role in Role.all()]
+                             for role in AuthController.get_roles()]
         self.user = user
 
     def validate_email(self, field):

@@ -1,10 +1,10 @@
 import os
 from app import create_app
-from app.auth.models import Role
+from app.auth.controllers import AuthController
 
 
 # Seed role entities
-Role.insert_roles()
+AuthController.insert_roles()
 
 # Create the app
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
